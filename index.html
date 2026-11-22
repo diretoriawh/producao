@@ -486,14 +486,14 @@ function tratarErro(e, login, idMsg) {
     $('offReg').onclick = function () { registrar('sem rede', 'offLog'); };
 
     // ================= 4. IMPRESSÃO =================
-    var IMP = { zpl: '', dados: null, impressora: null };
+    var IMP = { zpl: '', dados: null, lay: null, impressora: null };
     var BP = 'http://127.0.0.1:9100';
     $('impCalib').onclick = function () {
       chamar('gerarZplCalibracao', APP.token, $('impRolo').value).then(function (z) { IMP.zpl = z; $('impTexto').value = z; escrever('impLog', 'Calibração gerada.'); })
         .catch(function (e) { tratarErro(e, login, 'impMsg'); });
     };
     $('impGerar').onclick = function () {
-      chamar('gerarZplTeste', APP.token, $('impRolo').value).then(function (r) { IMP.zpl = r.par; IMP.dados = r.dados; $('impTexto').value = r.par; escrever('impLog', 'Par gerado: ' + r.dados.serial); })
+      chamar('gerarZplTeste', APP.token, $('impRolo').value).then(function (r) { IMP.zpl = r.par; IMP.dados = r.dados; IMP.lay = { serie: r.laySerie, sku: r.laySku }; $('impTexto').value = r.par; escrever('impLog', 'Par gerado: ' + r.dados.serial); })
         .catch(function (e) { tratarErro(e, login, 'impMsg'); });
     };
     $('impDetectar').onclick = function () {
@@ -525,54 +525,62 @@ function tratarErro(e, login, idMsg) {
       a.download = 'etiquetas_teste.zpl'; document.body.appendChild(a); a.click(); a.remove();
       escrever('impLog', 'Arquivo .zpl baixado.');
     };
-    function svgCodigo(txt, formato, altura, largura) {
-      var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      JsBarcode(s, txt, { format: formato, height: altura, width: largura, displayValue: formato === 'EAN13', margin: 0, fontSize: 16 });
-      return s.outerHTML;
+    // ---- PDF 10x5: desenha a MESMA disposição usada no ZPL (pontos de 203 dpi = 8 por mm) em SVG.
+    // Um único SVG por página, com o giro feito dentro do SVG: a impressão do navegador não corta nada.
+    function imgCodigo(txt, formato, mod, altura) {
+      var c = document.createElement('canvas');
+      JsBarcode(c, txt, { format: formato, width: mod, height: altura, displayValue: formato === 'EAN13', margin: 0, fontSize: 26, textMargin: 2 });
+      return { url: c.toDataURL('image/png'), w: c.width, h: c.height };
+    }
+    function quebrar(txt, largura, alt, linhas) {
+      var max = Math.max(1, Math.floor(largura / (alt * 0.52))), saida = [], atual = '';
+      String(txt || '').split(/\s+/).forEach(function (p) {
+        if ((atual + ' ' + p).trim().length > max && atual) { saida.push(atual); atual = p; } else atual = (atual + ' ' + p).trim();
+      });
+      if (atual) saida.push(atual);
+      return saida.slice(0, linhas);
+    }
+    function svgEtiqueta(lay, girar) {
+      var W = girar ? lay.h : lay.w, H = girar ? lay.w : lay.h, p = [];
+      var fonte = 'font-family="Arial Narrow, Arial, Helvetica, sans-serif" font-weight="bold"';
+      lay.el.forEach(function (e) {
+        if (e.k === 'box') {
+          if (e.h === 0) p.push('<rect x="' + e.x + '" y="' + e.y + '" width="' + e.w + '" height="' + e.esp + '"/>');
+          else if (e.esp >= Math.min(e.w, e.h)) p.push('<rect x="' + e.x + '" y="' + e.y + '" width="' + e.w + '" height="' + e.h + '"/>');
+          else p.push('<rect x="' + (e.x + e.esp / 2) + '" y="' + (e.y + e.esp / 2) + '" width="' + (e.w - e.esp) + '" height="' + (e.h - e.esp) + '" fill="none" stroke="#000" stroke-width="' + e.esp + '"/>');
+        } else if (e.k === 't') {
+          p.push('<text x="' + e.x + '" y="' + e.y + '" font-size="' + e.h + '" dominant-baseline="hanging" ' + fonte + (e.inv ? ' fill="#fff"' : '') + '>' + esc(e.txt) + '</text>');
+        } else if (e.k === 'tb') {
+          var ax = e.alin === 'C' ? e.x + e.w / 2 : (e.alin === 'R' ? e.x + e.w : e.x), anc = e.alin === 'C' ? 'middle' : (e.alin === 'R' ? 'end' : 'start');
+          quebrar(e.txt, e.w, e.h, e.linhas).forEach(function (l, i) {
+            p.push('<text x="' + ax + '" y="' + (e.y + i * e.h) + '" font-size="' + e.h + '" text-anchor="' + anc + '" dominant-baseline="hanging" ' + fonte + '>' + esc(l) + '</text>');
+          });
+        } else if (e.k === 'c128' || e.k === 'ean') {
+          var im = imgCodigo(e.txt, e.k === 'ean' ? 'EAN13' : 'CODE128', e.mod, e.h);
+          var tr = e.rot === 'R' ? ' transform="translate(' + (e.x + im.h) + ',' + e.y + ') rotate(90)"' : ' x="' + e.x + '" y="' + e.y + '"';
+          p.push('<image href="' + im.url + '" width="' + im.w + '" height="' + im.h + '" preserveAspectRatio="none"' + tr + ' style="image-rendering:pixelated"/>');
+        }
+      });
+      var g = girar ? ' transform="translate(' + lay.h + ',0) rotate(90)"' : '';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (W / 8) + 'mm" height="' + (H / 8) + 'mm" viewBox="0 0 ' + W + ' ' + H + '">' +
+        '<rect width="' + W + '" height="' + H + '" fill="#fff"/><g' + g + '>' + p.join('') + '</g></svg>';
     }
     $('impPdf').onclick = function () {
-      if (!IMP.dados) { aviso('impMsg', 'Gere o par de etiquetas primeiro.', 'erro'); return; }
+      if (!IMP.lay) { aviso('impMsg', 'Gere o par de etiquetas primeiro.', 'erro'); return; }
       if (typeof JsBarcode === 'undefined') { aviso('impMsg', 'Biblioteca de código de barras não carregou.', 'erro'); return; }
-      var d = IMP.dados, rolo100 = $('impRolo').value === '100';
-      var pg = rolo100 ? 'size: 100mm 50mm' : 'size: 50mm 100mm';
-      var cssGiro = 'position:absolute;top:0;left:0;transform-origin:top left;';
-      // etiqueta de série (natural 50x100) e de SKU (natural 100x50)
-      var serie = '<div class="et serie">' +
-        '<div class="c" style="font-size:9mm;font-weight:bold">BLUE</div><div class="c" style="font-size:3mm;font-weight:bold">ELETRO REFRIGERADOS</div>' +
-        '<div class="c" style="font-size:1.8mm">WH IND. COM E IMP - CNPJ: 29.730.943/0001-51<br>SAC/TEL: (31) 3046-6129 · sac@blueeletrorefrigerados.com.br</div><hr>' +
-        '<div class="l"><span>CAPACIDADE:<br><b style="font-size:7mm">' + esc(d.capacidade) + '</b></span><span>MODELO:<br><b style="font-size:5mm">' + esc(d.modelo) + '</b></span></div>' +
-        '<div class="l"><span>CONDIÇÃO DE USO:</span><b>' + esc(d.condicao) + '</b></div>' +
-        '<div class="l"><span>PRESSÃO HIDRÁULICA:</span><b>' + esc(d.pressaoHidr) + '</b></div>' +
-        '<div class="l"><span>FLUIDO (R134a): ' + esc(d.fluido) + '</span><span>VAZÃO: ' + esc(d.vazao) + '</span></div>' +
-        '<div class="l"><span>P. BAIXA: ' + esc(d.pBaixa) + '</span><span>REFRIG.: ' + esc(d.refrigeracao) + '</span></div>' +
-        '<div class="l"><span>CORRENTE: ' + esc(d.corrente) + '</span><span>POTÊNCIA: ' + esc(d.potencia) + '</span></div>' +
-        '<div class="l"><span>GRAU PROT: ' + esc(d.grau) + '</span><span>FREQ.: ' + esc(d.frequencia) + '</span></div>' +
-        '<div class="c" style="font-weight:bold;font-size:2.6mm">APARELHO DE PONTO DE USO (POU)</div>' +
-        '<div style="font-size:3.4mm;font-weight:bold">S/N: ' + esc(d.serial) + '</div>' +
-        '<div class="l"><span style="background:#000;color:#fff;font-size:10mm;font-weight:bold;padding:0 2mm">' + esc(d.variacao) + '</span><span style="border:.6mm solid #000;font-size:10mm;font-weight:bold;padding:0 2mm">' + esc(d.tensao) + '</span><span>' + esc(d.data) + '</span></div>' +
-        '<div style="font-size:2mm">MED. PRODUTO: ' + esc(d.medidas) + '<br>MED. C/ EMB.: ' + esc(d.medidasEmb) + '<br>PESO LÍQ/BRUTO: ' + esc(d.peso) + '</div>' +
-        '<div style="font-size:1.7mm">' + esc(d.conteudo) + '</div>' +
-        '<div class="cb">' + svgCodigo(d.serial, 'CODE128', 40, 1.6) + '</div></div>';
-      var sku = '<div class="et sku"><div style="font-size:8mm;font-weight:bold">' + esc(d.sku) + '</div>' +
-        '<div style="font-size:3.6mm">' + esc(d.descricao) + '</div>' +
-        '<div style="position:absolute;left:30mm;bottom:3mm;width:45mm">' + svgCodigo(d.ean, 'EAN13', 50, 2) + '</div>' +
-        '<div style="position:absolute;left:2mm;bottom:2mm;font-size:2.4mm;font-weight:bold">N/S: ' + esc(d.serial) + '</div></div>';
-      function pagina(conteudo, girar, larguraNatural) {
-        var giro = girar ? cssGiro + (rolo100 ? 'transform:rotate(-90deg) translateX(-' + larguraNatural + ');' : 'transform:rotate(90deg) translateY(-' + larguraNatural + ');') : '';
-        return '<div class="pg"><div style="' + giro + '">' + conteudo + '</div></div>';
-      }
+      var rolo100 = $('impRolo').value === '100';
+      var lw = rolo100 ? 100 : 50, lh = rolo100 ? 50 : 100;
+      // série é em pé (50x100): gira no rolo de 100; SKU é deitada (100x50): gira no rolo de 50 — igual ao ZPL
+      var paginas = [svgEtiqueta(IMP.lay.serie, rolo100), svgEtiqueta(IMP.lay.sku, !rolo100)];
       var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Etiquetas</title><style>' +
-        '@page{' + pg + ';margin:0} *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif}' +
-        '.pg{position:relative;overflow:hidden;page-break-after:always;width:' + (rolo100 ? '100mm' : '50mm') + ';height:' + (rolo100 ? '50mm' : '100mm') + '}' +
-        '.et{position:relative;padding:1.5mm;overflow:hidden} .serie{width:50mm;height:100mm;padding-right:9mm} .sku{width:100mm;height:50mm}' +
-        '.c{text-align:center} .l{display:flex;justify-content:space-between;font-size:2.1mm;line-height:1.25} hr{border:0;border-top:.3mm solid #000;margin:1mm 0}' +
-        '.cb{position:absolute;right:0;top:8mm;width:85mm;transform:rotate(90deg);transform-origin:top left;left:49mm} .cb svg{width:85mm;height:7mm}' +
-        '</style></head><body>' + pagina(serie, rolo100, '50mm') + pagina(sku, !rolo100, '50mm') +
+        '@page{size:' + lw + 'mm ' + lh + 'mm;margin:0} html,body{margin:0;padding:0}' +
+        '.pg{width:' + lw + 'mm;height:' + lh + 'mm;overflow:hidden;page-break-after:always;break-after:page} .pg:last-child{page-break-after:auto;break-after:auto} svg{display:block}' +
+        '</style></head><body>' + paginas.map(function (s) { return '<div class="pg">' + s + '</div>'; }).join('') +
         '<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>';
       var w = window.open('', '_blank');
       if (!w) { aviso('impMsg', 'O navegador bloqueou a janela. Libere pop-ups para esta página.', 'erro'); return; }
       w.document.open(); w.document.write(html); w.document.close();
-      escrever('impLog', 'Página 10x5 aberta para impressão (rolo ' + $('impRolo').value + ' mm).');
+      escrever('impLog', 'Página ' + lw + 'x' + lh + ' mm aberta para impressão (rolo ' + $('impRolo').value + ' mm). Na janela de impressão: Margens = Nenhuma, Escala = 100%.');
     };
     $('impReg').onclick = function () { registrar('impressão', 'impLog'); };
 
