@@ -549,11 +549,16 @@ function tratarErro(e, login, idMsg) {
           else if (e.esp >= Math.min(e.w, e.h)) p.push('<rect x="' + e.x + '" y="' + e.y + '" width="' + e.w + '" height="' + e.h + '"/>');
           else p.push('<rect x="' + (e.x + e.esp / 2) + '" y="' + (e.y + e.esp / 2) + '" width="' + (e.w - e.esp) + '" height="' + (e.h - e.esp) + '" fill="none" stroke="#000" stroke-width="' + e.esp + '"/>');
         } else if (e.k === 't') {
-          p.push('<text x="' + e.x + '" y="' + e.y + '" font-size="' + e.h + '" dominant-baseline="hanging" ' + fonte + (e.inv ? ' fill="#fff"' : '') + '>' + esc(e.txt) + '</text>');
+          var pos = e.rot === 'B' ? ' transform="translate(' + e.x + ',' + (e.y + (e.len || 0)) + ') rotate(-90)" x="0" y="0"' : ' x="' + e.x + '" y="' + e.y + '"';
+          var ajuste = e.rot === 'B' && e.len && String(e.txt).length * e.h * 0.55 > e.len ? ' textLength="' + e.len + '" lengthAdjust="spacingAndGlyphs"' : '';
+          p.push('<text' + pos + ajuste + ' font-size="' + e.h + '" dominant-baseline="hanging" ' + fonte + (e.inv ? ' fill="#fff"' : '') + '>' + esc(e.txt) + '</text>');
         } else if (e.k === 'tb') {
           var ax = e.alin === 'C' ? e.x + e.w / 2 : (e.alin === 'R' ? e.x + e.w : e.x), anc = e.alin === 'C' ? 'middle' : (e.alin === 'R' ? 'end' : 'start');
           quebrar(e.txt, e.w, e.h, e.linhas).forEach(function (l, i) {
-            p.push('<text x="' + ax + '" y="' + (e.y + i * e.h) + '" font-size="' + e.h + '" text-anchor="' + anc + '" dominant-baseline="hanging" ' + fonte + '>' + esc(l) + '</text>');
+            // a fonte da Zebra é mais estreita que a Arial: na prévia, aperta a linha que passaria da largura
+            var aperta = l.length * e.h * 0.55 > e.w ? ' textLength="' + e.w + '" lengthAdjust="spacingAndGlyphs"' : '';
+            var xx = aperta ? e.x : ax, an = aperta ? 'start' : anc;
+            p.push('<text x="' + xx + '" y="' + (e.y + i * (e.h + 2)) + '" font-size="' + e.h + '" text-anchor="' + an + '" dominant-baseline="hanging" ' + fonte + aperta + (e.inv ? ' fill="#fff"' : '') + '>' + esc(l) + '</text>');
           });
         } else if (e.k === 'c128' || e.k === 'ean') {
           var im = imgCodigo(e.txt, e.k === 'ean' ? 'EAN13' : 'CODE128', e.mod, e.h);
