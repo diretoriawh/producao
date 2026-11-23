@@ -1,595 +1,770 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Testes — Fase 0</title>
-  <meta charset="utf-8">
-  <style>
-  :root { --azul: #0b5394; --azul2: #1c7ed6; --verde: #2b8a3e; --vermelho: #c92a2a; --laranja: #e8590c; --cinza: #f1f3f5; }
-  * { box-sizing: border-box; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b5394">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Produção">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone-192.png">
+<title>Produção — Leitura</title>
+<style>
+  :root { --azul: #0b5394; --azul2: #1c7ed6; --verde: #2b8a3e; --vermelho: #c92a2a; --amarelo: #f59f00; --cinza: #f1f3f5; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: #212529; }
-  body { min-height: 100vh; background: linear-gradient(160deg, #0b5394 0%, #1c7ed6 55%, #74c0fc 100%); }
+  body { min-height: 100vh; background: #0b5394; overflow-x: hidden; }
+  /* fundo de água (provisório, só CSS) */
+  .agua { position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, #0b5394 0%, #1c7ed6 50%, #74c0fc 100%); overflow: hidden; }
+  .agua i { position: absolute; width: 250vmax; height: 250vmax; left: 50%; margin-left: -125vmax; top: 78vh; border-radius: 43%;
+    background: rgba(255,255,255,.13); animation: onda 18s linear infinite; }
+  .agua i:nth-child(2) { top: 82vh; border-radius: 40%; background: rgba(255,255,255,.10); animation-duration: 26s; animation-direction: reverse; }
+  .agua i:nth-child(3) { top: 87vh; border-radius: 45%; background: rgba(255,255,255,.08); animation-duration: 34s; }
+  @keyframes onda { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .agua i { animation: none; } }
+
   .faixa-teste { background: var(--vermelho); color: #fff; text-align: center; font-weight: bold; padding: 6px; letter-spacing: 1px; }
-  .topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: rgba(0,0,0,.25); color: #fff; }
-  .topo .quem { font-size: 15px; line-height: 1.25; }
-  .topo .quem b { font-size: 17px; }
-  .cartao { background: #fff; border-radius: 12px; padding: 18px; margin: 14px auto; max-width: 560px; box-shadow: 0 4px 18px rgba(0,0,0,.2); }
-  .cartao.largo { max-width: 1200px; }
-  h1, h2, h3 { margin: 0 0 12px 0; color: var(--azul); }
+  .marca { text-align: center; padding: 18px 10px 4px; color: #fff; }
+  .marca .logo { display: inline-block; font-size: 28px; font-weight: bold; letter-spacing: 2px; padding: 8px 18px; border: 3px solid #fff; border-radius: 12px; }
+  .marca img { max-height: 70px; max-width: 80%; }
+  .topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,.30); color: #fff; }
+  .topo .quem { font-size: 15px; line-height: 1.25; min-width: 0; }
+  .topo .quem b { font-size: 18px; }
+  .topo .acoes { display: flex; gap: 6px; flex-shrink: 0; }
+  .chip { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 13px; font-weight: bold; background: rgba(255,255,255,.2); margin-top: 3px; }
+  .chip.off { background: var(--amarelo); color: #000; }
+  .cartao { background: #fff; border-radius: 12px; padding: 18px; margin: 14px auto; max-width: 620px; box-shadow: 0 4px 18px rgba(0,0,0,.2); }
+  h2, h3 { margin: 0 0 12px 0; color: var(--azul); }
   label { display: block; font-weight: bold; margin: 10px 0 4px; }
-  input, select, textarea { width: 100%; font-size: 18px; padding: 10px; border: 2px solid #ced4da; border-radius: 8px; }
-  textarea { font-family: monospace; font-size: 12px; }
-  button, .botao { display: inline-block; font-size: 18px; font-weight: bold; padding: 14px 18px; border: 0; border-radius: 10px; background: var(--azul); color: #fff; cursor: pointer; text-decoration: none; }
-  button:disabled { opacity: .5; cursor: default; }
-  button.sec { background: #495057; }
-  button.claro { background: #e7f5ff; color: var(--azul); }
-  button.perigo { background: var(--vermelho); }
-  button.ok { background: var(--verde); }
+  input { width: 100%; font-size: 20px; padding: 12px; border: 2px solid #ced4da; border-radius: 8px; }
+  button { display: inline-block; font-size: 18px; font-weight: bold; padding: 14px 18px; border: 0; border-radius: 10px; background: var(--azul); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.sec { background: #495057; } button.claro { background: #e7f5ff; color: var(--azul); }
+  button.perigo { background: var(--vermelho); } button.ok { background: var(--verde); }
   button.peq { font-size: 14px; padding: 8px 12px; }
   .bloco { width: 100%; margin-top: 10px; }
-  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .grade button { min-height: 70px; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .grade button { min-height: 72px; }
   .msg { padding: 10px 12px; border-radius: 8px; margin: 10px 0; font-weight: bold; }
-  .msg.erro { background: #ffe3e3; color: var(--vermelho); }
-  .msg.ok { background: #d3f9d8; color: var(--verde); }
-  .msg.info { background: #e7f5ff; color: var(--azul); }
+  .msg.erro { background: #ffe3e3; color: var(--vermelho); } .msg.ok { background: #d3f9d8; color: var(--verde); }
+  .msg.info { background: #e7f5ff; color: var(--azul); } .msg.alerta { background: #fff3bf; color: #7a4f00; }
   .oculto { display: none !important; }
   .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .linha > * { flex: 1; }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { border-bottom: 1px solid #dee2e6; padding: 6px 8px; text-align: left; vertical-align: top; }
-  th { background: var(--cinza); position: sticky; top: 0; }
-  tr:hover td { background: #f8f9fa; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; background: #e9ecef; }
-  .tag.verde { background: #d3f9d8; color: var(--verde); } .tag.vermelho { background: #ffe3e3; color: var(--vermelho); }
-  .espera { position: fixed; inset: 0; background: rgba(255,255,255,.55); display: flex; align-items: center; justify-content: center; z-index: 50; font-size: 22px; font-weight: bold; color: var(--azul); }
-  .modal-fundo { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; z-index: 40; overflow: auto; padding: 20px 10px; }
-  .modal { background: #fff; border-radius: 12px; padding: 18px; width: 100%; max-width: 620px; }
-  .pequeno { font-size: 13px; color: #868e96; }
-  video { width: 100%; max-height: 50vh; background: #000; border-radius: 8px; }
-</style>
+  .rodape { text-align: center; color: rgba(255,255,255,.8); font-size: 12px; padding: 10px; }
+  .espera { position: fixed; inset: 0; background: rgba(255,255,255,.55); display: flex; align-items: center; justify-content: center; z-index: 90; font-size: 24px; font-weight: bold; color: var(--azul); }
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
-  <style>
-    .abas { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 14px 0; }
-    .abas button { font-size: 15px; padding: 10px 14px; }
-    .abas button.ativo { background: #fff; color: var(--azul); }
-    .log { font-family: monospace; font-size: 13px; background: #f8f9fa; border-radius: 8px; padding: 8px; max-height: 260px; overflow: auto; white-space: pre-wrap; }
-  </style>
+  /* tela de leitura */
+  .leitura { max-width: 900px; margin: 0 auto; padding: 10px; }
+  .pedido { background: #fff; border-radius: 12px; padding: 14px; text-align: center; font-size: 26px; font-weight: bold; color: var(--azul); }
+  .pedido small { display: block; font-size: 16px; color: #495057; font-weight: normal; margin-top: 4px; }
+  .pedido.ean { background: #fff3bf; color: #7a4f00; }
+  .camera { position: relative; margin-top: 10px; background: #000; border-radius: 12px; overflow: hidden; min-height: 120px; }
+  .camera video { width: 100%; max-height: 46vh; display: block; object-fit: cover; }
+  .camera .mira { position: absolute; left: 10%; right: 10%; top: 50%; height: 0; border-top: 3px solid rgba(255,80,80,.85); }
+  .camera .camMsg { color: #fff; padding: 18px; text-align: center; }
+  .dica { min-height: 22px; text-align: center; color: #fff; font-weight: bold; margin-top: 6px; }
+  .manual { background: #fff; border-radius: 12px; padding: 10px; margin-top: 10px; }
+  .manual .linha > input { flex: 3; } .manual .linha > button { flex: 1; }
+
+  /* resultado */
+  .res { border-radius: 12px; padding: 16px; margin-top: 10px; color: #fff; text-align: center; }
+  .res.verde { background: var(--verde); }
+  .res .grande { font-size: 40px; font-weight: bold; }
+  .res .det { font-size: 20px; margin-top: 6px; }
+  .res .pend { display: inline-block; margin-top: 8px; background: var(--amarelo); color: #000; padding: 4px 10px; border-radius: 10px; font-size: 15px; font-weight: bold; }
+  .res .nc { margin-top: 12px; background: rgba(255,255,255,.25); color: #fff; }
+  .res .nctxt { font-size: 13px; opacity: .9; margin-top: 4px; }
+  .sobre { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; color: #fff; }
+  .sobre.vermelha { background: var(--vermelho); }
+  .sobre.travada { background: #343a40; }
+  .sobre .grande { font-size: 44px; font-weight: bold; }
+  .sobre .motivo { font-size: 26px; margin: 16px 0; max-width: 800px; }
+  .sobre .lista { background: rgba(0,0,0,.2); border-radius: 10px; padding: 10px 14px; max-height: 45vh; overflow: auto; text-align: left; font-size: 18px; width: 100%; max-width: 760px; }
+  .sobre button.ciente { font-size: 28px; padding: 20px 50px; background: #fff; color: var(--vermelho); margin-top: 16px; }
+  .sobre.travada button { margin: 6px; }
+  .modal-fundo { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-start; justify-content: center; z-index: 70; overflow: auto; padding: 20px 10px; }
+  .modal { background: #fff; border-radius: 12px; padding: 18px; width: 100%; max-width: 620px; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  td { border-bottom: 1px solid #dee2e6; padding: 6px 8px; text-align: left; }
+  ol.ajuda li { margin-bottom: 6px; }
+</style>
 </head>
 <body>
-  <div id="topo" class="topo oculto">
-    <div class="quem"><b id="tNome"></b><br><span id="tInfo"></span></div>
-    <button class="perigo peq" id="btSair">Sair</button>
-  </div>
+<div class="agua"><i></i><i></i><i></i></div>
+<div id="faixaTeste" class="faixa-teste oculto">BASE DE TESTE ATIVA</div>
+
+<!-- LOGIN -->
+<div id="telaLogin">
+  <div class="marca"><span class="logo" id="logo">PRODUÇÃO</span></div>
   <div id="raiz"></div>
-  <div id="testes" class="oculto">
-    <div class="abas">
-      <button data-a="aCam" class="claro">1. Câmera</button>
-      <button data-a="aTempo" class="claro">2. Tempo</button>
-      <button data-a="aOff" class="claro">3. Sem rede</button>
-      <button data-a="aImp" class="claro">4. Impressão</button>
-    </div>
+</div>
 
-    <!-- 1. CÂMERA -->
-    <div id="aCam" class="cartao aba">
-      <h2>1. Câmera: Code 128 e EAN13</h2>
-      <p class="pequeno">Leia uma etiqueta de série (Code 128) e uma de SKU (EAN13). Teste nos tablets Android e num iPhone.</p>
-      <div id="camInfo" class="msg info">Aparelho: <span id="camUA"></span></div>
-      <video id="video" playsinline muted class="oculto"></video>
-      <div class="linha"><button id="camAbrir">Abrir câmera</button><button class="sec" id="camFechar">Fechar</button></div>
-      <div id="camMsg"></div>
-      <div class="log" id="camLog"></div>
-      <button class="ok bloco" id="camReg">Registrar resultado no Log</button>
+<!-- LEITURA -->
+<div id="telaLeitura" class="oculto">
+  <div class="topo">
+    <div class="quem"><b id="tNome"></b><br><span id="tEst"></span><br><span class="chip" id="tRede">online</span></div>
+    <div class="acoes">
+      <button class="claro peq" id="btConsulta">Consultar</button>
+      <button class="claro peq" id="btAjuda2">Ajuda</button>
+      <button class="perigo peq" id="btSair">Sair</button>
     </div>
-
-    <!-- 2. TEMPO -->
-    <div id="aTempo" class="cartao aba oculto">
-      <h2>2. Tempo de ponta a ponta</h2>
-      <p class="pequeno">Precisa da base de teste ativa com volume gerado. Faz leituras reais (1 chamada: confere e grava) na estação do login, do tablet até o servidor e de volta. Meta: até 2 s.</p>
-      <div class="linha"><button id="tpPing">Medir rede (5 pings)</button><button id="tpRodar">Rodar 10 leituras</button></div>
-      <div id="tpMsg"></div>
-      <div class="log" id="tpLog"></div>
-      <button class="ok bloco" id="tpReg">Registrar resultado no Log</button>
+  </div>
+  <div class="leitura">
+    <div class="pedido" id="pedido">Leia o SERIAL</div>
+    <div id="resultado"></div>
+    <div class="camera" id="camBox">
+      <video id="video" playsinline muted></video>
+      <div class="mira"></div>
+      <div class="camMsg oculto" id="camMsg"></div>
     </div>
-
-    <!-- 3. SEM REDE -->
-    <div id="aOff" class="cartao aba oculto">
-      <h2>3. Sem rede (queda curta)</h2>
-      <p class="pequeno">Roteiro: (1) coloque 3 leituras na fila; (2) ligue o modo avião; (3) toque "Enviar fila" e veja que elas ficam guardadas; (4) recarregue NÃO — desligue o modo avião; (5) a fila envia sozinha ao voltar a rede; (6) "Reenviar a última" prova que não grava em dobro.</p>
-      <div class="msg info">Rede agora: <b id="offRede"></b> · Fila deste usuário: <b id="offQtd">0</b> · Armazenamento local: <b id="offLS"></b></div>
+    <div class="dica" id="dica"></div>
+    <div class="manual">
       <div class="linha">
-        <button id="offPor">Colocar 3 leituras na fila</button>
-        <button id="offEnviar">Enviar fila</button>
+        <input id="manual" placeholder="Digitar código (se a etiqueta não ler)" autocomplete="off" inputmode="text">
+        <button id="btManual">Enviar</button>
       </div>
       <div class="linha" style="margin-top:8px">
-        <button class="sec" id="offRepetir">Reenviar a última (duplicidade)</button>
-        <button class="sec" id="offLimpar">Limpar fila</button>
+        <button class="sec peq oculto" id="btCancelarEan">Cancelar esta peça</button>
+        <button class="claro peq" id="btCamera">Reabrir câmera</button>
       </div>
-      <div id="offMsg"></div>
-      <div class="log" id="offLog"></div>
-      <button class="ok bloco" id="offReg">Registrar resultado no Log</button>
-    </div>
-
-    <!-- 4. IMPRESSÃO -->
-    <div id="aImp" class="cartao aba oculto">
-      <h2>4. Impressão na Zebra ZD220</h2>
-      <p class="pequeno">Faça no computador da produção, com a Zebra ligada por USB. Dados de exemplo (PIC25L/2).</p>
-      <label>Largura do rolo na impressora (lado que atravessa a cabeça)</label>
-      <select id="impRolo"><option value="100">100 mm (etiqueta passa deitada)</option><option value="50">50 mm (etiqueta passa em pé)</option></select>
-      <div class="linha" style="margin-top:10px"><button class="sec" id="impCalib">Gerar calibração</button><button id="impGerar">Gerar par de etiquetas</button></div>
-      <h3 style="margin-top:16px">A) ZPL direto (Zebra Browser Print)</h3>
-      <p class="pequeno">Precisa do programa gratuito "Zebra Browser Print" instalado e aberto no computador.</p>
-      <div class="linha"><button class="claro" id="impDetectar">Detectar impressora</button><button id="impZpl">Imprimir ZPL</button></div>
-      <h3 style="margin-top:16px">B) PDF 10×5 pelo navegador (driver da Zebra)</h3>
-      <div class="linha"><button id="impPdf">Abrir para imprimir</button></div>
-      <h3 style="margin-top:16px">C) Arquivo .zpl (plano B manual)</h3>
-      <div class="linha"><button class="claro" id="impBaixar">Baixar .zpl</button></div>
-      <div id="impMsg"></div>
-      <label>ZPL gerado</label><textarea id="impTexto" rows="8"></textarea>
-      <div class="log" id="impLog"></div>
-      <button class="ok bloco" id="impReg">Registrar resultado no Log</button>
     </div>
   </div>
+</div>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycbxtCUkW9stMLHfC0YNUgiUlIqXwDj7EDF2pVmybjoVL_1Pf_EedSIcI6U9NPuBYUBc/exec";</script>
+<!-- TELA VERMELHA -->
+<div id="vermelha" class="sobre vermelha oculto">
+  <div class="grande">✖ NÃO REGISTRADO</div>
+  <div class="motivo" id="vMotivo"></div>
+  <div id="vLista" class="lista oculto"></div>
+  <button class="ciente" id="btCiente">CIENTE</button>
+</div>
+
+<!-- TABLET TRAVADO -->
+<div id="travada" class="sobre travada oculto">
+  <div class="grande">TABLET TRAVADO</div>
+  <div class="motivo" id="trMotivo"></div>
+  <div class="msg alerta" style="max-width:700px">A última peça NÃO foi registrada. Depois de destravar, leia de novo.</div>
+  <div>
+    <button id="btTentar">Tentar sincronizar</button>
+    <button class="ok" id="btDestravar">Destravar (senha do supervisor)</button>
+  </div>
+  <div id="trMsg" style="max-width:700px"></div>
+</div>
+
+<div id="modal"></div>
+<div class="rodape" id="rodape"></div>
+
 <script>
-/* Comum.html — funções usadas por todas as páginas (app, painel, testes). */
-var APP = { token: null, usuario: null, portal: 'app' };
+/* ================= Configuração ================= */
+var APP_VERSAO = 'F2.0';
+var API_URL = window.API_URL_TESTE || 'https://script.google.com/macros/s/AKfycbxtCUkW9stMLHfC0YNUgiUlIqXwDj7EDF2pVmybjoVL_1Pf_EedSIcI6U9NPuBYUBc/exec';
+var TIMEOUT_MS = 9000;          // sem resposta nesse tempo = sem rede (o reenvio usa o mesmo ID: não duplica)
+var SINC_MS = 5 * 60 * 1000;    // sincroniza lista de travadas a cada 5 min
+var FILA_MS = 15000;            // tenta enviar a fila a cada 15 s
+var RE_SERIAL = /^\d{6}[PT]\d{3}$/, RE_EAN13 = /^\d{13}$/;
 
-// ---- Armazenamento local (protegido: alguns aparelhos bloqueiam) ----
+/* ================= Armazenamento local ================= */
 var LS = (function () { try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); return localStorage; } catch (e) { return null; } })();
 function lsGet(k) { try { return LS ? LS.getItem(k) : null; } catch (e) { return null; } }
 function lsSet(k, v) { try { if (LS) LS.setItem(k, v); } catch (e) {} }
 function lsDel(k) { try { if (LS) LS.removeItem(k); } catch (e) {} }
-APP.dispositivo = lsGet('dispositivo') || ('D' + Math.random().toString(36).slice(2, 8).toUpperCase());
+function lsJson(k, padrao) { try { var v = JSON.parse(lsGet(k)); return v === null ? padrao : v; } catch (e) { return padrao; } }
+function lsPut(k, v) { lsSet(k, JSON.stringify(v)); }
+
+var APP = { token: null, usuario: null, sinc: null, dispositivo: lsGet('dispositivo') || ('D' + Math.random().toString(36).slice(2, 8).toUpperCase()) };
 lsSet('dispositivo', APP.dispositivo);
 
-// ---- Chamada ao servidor como Promise ----
-// Dentro do Apps Script usa google.script.run. Na página hospedada fora do Google
-// (window.API_URL definido) usa fetch no endpoint doPost do mesmo web app.
-function erroServidor_(m) {
+/* ================= Servidor ================= */
+function erroDe(m) {
   m = String(m || 'Erro no servidor').replace(/^Error:\s*/, '').replace(/^Exception:\s*/, '');
-  var err = new Error(m);
-  if (/^SESSAO_TROCA/.test(m)) { err.troca = true; }
-  else if (/^SESSAO/.test(m)) { err.sessao = true; }
-  return err;
+  var e = new Error(m);
+  if (/^SESSAO_TROCA/.test(m)) e.troca = true; else if (/^SESSAO/.test(m)) e.sessao = true;
+  return e;
 }
 function chamar(fn) {
   var args = Array.prototype.slice.call(arguments, 1);
-  if (window.API_URL) {
-    return fetch(window.API_URL, {
-      method: 'POST', redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // "simples": sem pré-verificação CORS
-      body: JSON.stringify({ fn: fn, args: args })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('Servidor respondeu ' + r.status);
-      return r.json();
-    }, function () { throw new Error('Sem conexão com o servidor'); })
-      .then(function (d) { if (!d || !d.ok) throw erroServidor_(d && d.erro); return d.r; });
-  }
-  return new Promise(function (ok, falha) {
-    google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) {
-      falha(erroServidor_((e && e.message) ? e.message : String(e)));
-    })[fn].apply(null, args);
-  });
+  var ctl = window.AbortController ? new AbortController() : null;
+  var tm = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+  return fetch(API_URL, {
+    method: 'POST', redirect: 'follow', signal: ctl ? ctl.signal : undefined,
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ fn: fn, args: args })
+  }).then(function (r) {
+    if (!r.ok) { var e = new Error('Servidor respondeu ' + r.status); e.rede = r.status >= 500 || r.status === 429; throw e; }
+    return r.json();
+  }, function () { var e = new Error('Sem conexão com o servidor'); e.rede = true; throw e; })
+    .then(function (d) {
+      clearTimeout(tm);
+      contato();
+      if (!d || !d.ok) throw erroDe(d && d.erro);
+      return d.r;
+    }, function (e) { clearTimeout(tm); throw e; });
 }
 
-// ---- Utilidades de tela ----
+/* ================= Utilidades ================= */
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function mostrar(id, sim) { $(id).classList.toggle('oculto', sim === false); }
-function aviso(id, texto, tipo) { var e = $(id); if (!texto) { e.innerHTML = ''; return; } e.innerHTML = '<div class="msg ' + (tipo || 'info') + '">' + esc(texto).replace(/\n/g, '<br>') + '</div>'; }
-var _espera = 0;
+function aviso(id, texto, tipo) { var e = $(id); if (!e) return; e.innerHTML = texto ? '<div class="msg ' + (tipo || 'info') + '">' + esc(texto).replace(/\n/g, '<br>') + '</div>' : ''; }
+var _esp = 0;
 function espera(on) {
-  _espera += on ? 1 : -1; if (_espera < 0) _espera = 0;
+  _esp = Math.max(0, _esp + (on ? 1 : -1));
   var e = $('espera');
   if (!e) { e = document.createElement('div'); e.id = 'espera'; e.className = 'espera oculto'; e.textContent = 'Aguarde…'; document.body.appendChild(e); }
-  e.classList.toggle('oculto', _espera === 0);
+  e.classList.toggle('oculto', _esp === 0);
 }
-function msTxt(ms) { return ms < 1000 ? ms + ' ms' : (ms / 1000).toFixed(2).replace('.', ',') + ' s'; }
 function uuid() { return 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+function msTxt(ms) { return ms < 1000 ? ms + ' ms' : (ms / 1000).toFixed(1).replace('.', ',') + ' s'; }
+function horaTxt(t) { var d = new Date(t); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function normal(s) { return String(s || '').replace(/\s+/g, '').toUpperCase(); }
 
-// ---- Login (app, painel e testes) ----
-/**
- * opts: { raiz: elemento, portal: 'app'|'painel', aoEntrar: function(usuario) }
- * No app: escolhe estação -> nome (ou Acesso gestor) -> senha. No painel: nome -> senha.
- */
-function Login(opts) {
-  var L = { estacao: '', modo: opts.portal === 'painel' ? 'painel' : 'operador', uid: '', nome: '', dados: null };
-  var raiz = opts.raiz;
-  var chaveToken = 'token_' + opts.portal;
+/* ---- som e vibração ---- */
+var AUD = null;
+function somIniciar() { try { if (!AUD) AUD = new (window.AudioContext || window.webkitAudioContext)(); if (AUD.state === 'suspended') AUD.resume(); } catch (e) {} }
+function bip(freq, dur, vezes) {
+  try {
+    if (!AUD) return;
+    for (var i = 0; i < (vezes || 1); i++) {
+      var o = AUD.createOscillator(), g = AUD.createGain(), t = AUD.currentTime + i * (dur + 0.08);
+      o.frequency.value = freq; o.type = 'square'; g.gain.value = 0.15;
+      o.connect(g); g.connect(AUD.destination); o.start(t); o.stop(t + dur);
+    }
+  } catch (e) {}
+}
+function sinalOk() { bip(1200, 0.12, 1); if (navigator.vibrate) navigator.vibrate(80); }
+function sinalErro() { bip(300, 0.35, 2); if (navigator.vibrate) navigator.vibrate([300, 120, 300]); }
+document.addEventListener('click', somIniciar, { passive: true });
 
-  function tela(html) { raiz.innerHTML = '<div class="cartao">' + html + '</div>'; }
+/* ================= Estado local: contato, sincronização, fila ================= */
+function contato() { lsSet('ultimoContato', String(Date.now())); lsDel('destraveAte'); atualizarRede(); }
+function ultimoContato() { return Number(lsGet('ultimoContato') || 0); }
+// Fila ÚNICA do tablet: cada item leva a credencial (assinada pelo servidor) de quem leu.
+// É enviada assim que a rede volta, com qualquer pessoa logada ou mesmo na tela de login.
+function lerFila() { return lsJson('fila', []); }
+function gravarFila(f) { lsPut('fila', f); atualizarRede(); }
+function sincLocal() { return APP.sinc || lsJson('sinc', null); }
 
-  function falhou(e) { espera(false); aviso('loginMsg', e.message, 'erro'); }
+/** Lista de peças a fazer na estação (para conferir sem rede): {h, sku: {serial: SKU}}. */
+var _lista = {};
+function listaEstacao(est) {
+  if (_lista[est]) return _lista[est];
+  var l = lsJson('lista_' + est, null);
+  if (!l) return null;
+  _lista[est] = { h: l.h, sku: montarMapa(l) };
+  return _lista[est];
+}
+function montarMapa(l) {
+  var m = {};
+  if (l.p) l.p.split(';').forEach(function (x) { var a = x.split(','); m[a[0]] = l.skus[Number(a[1])]; });
+  return m;
+}
+function guardarLista(est, l) {
+  if (!l || l.igual) return;
+  lsPut('lista_' + est, l);
+  _lista[est] = { h: l.h, sku: montarMapa(l) };
+}
 
-  L.iniciar = function () {
-    var tk = lsGet(chaveToken);
-    if (tk) {
-      espera(true);
-      chamar('retomarSessao', tk).then(function (r) {
-        espera(false); APP.token = tk; APP.usuario = r.usuario;
-        if (r.trocarSenha) L.telaTroca(); else opts.aoEntrar(r.usuario);
-      }).catch(function () { espera(false); lsDel(chaveToken); L.carregar(); });
-    } else L.carregar();
-  };
+function travado() {
+  var s = sincLocal(), h = s && s.travaH ? s.travaH : 2;
+  if (Number(lsGet('destraveAte') || 0) > Date.now()) return false;
+  return Date.now() - ultimoContato() > h * 3600000;
+}
 
-  L.carregar = function () {
-    espera(true);
-    chamar('dadosLogin').then(function (d) {
-      espera(false); L.dados = d;
-      if (d.baseTeste) document.body.insertAdjacentHTML('afterbegin', $('faixaTeste') ? '' : '<div id="faixaTeste" class="faixa-teste">BASE DE TESTE ATIVA</div>');
-      if (opts.portal === 'painel') L.telaNomes(); else L.telaEstacoes();
-    }).catch(function (e) { espera(false); tela('<div class="msg erro">' + esc(e.message) + '</div><button onclick="location.reload()">Tentar de novo</button>'); });
-  };
+function atualizarRede() {
+  var el = $('tRede'); if (!el || !APP.usuario) return;
+  var f = lerFila().length, on = navigator.onLine && Date.now() - ultimoContato() < 120000;
+  var txt = (on ? 'online' : 'SEM REDE') + (f ? ' · ' + f + ' pendente' + (f > 1 ? 's' : '') : '');
+  var dest = Number(lsGet('destraveAte') || 0);
+  if (dest > Date.now()) txt += ' · destravado até ' + horaTxt(dest).slice(6);
+  el.textContent = txt;
+  el.classList.toggle('off', !on || f > 0);
+}
 
-  L.telaEstacoes = function () {
-    L.modo = 'operador';
-    tela('<h2>Escolha a estação</h2><div class="grade">' + L.dados.estacoes.map(function (e) {
+function sincronizar() {
+  if (!APP.token || !APP.usuario) return Promise.resolve();
+  var dest = lsJson('destraves', []), est = APP.usuario.estacao, l = listaEstacao(est);
+  return chamar('sincronizarApp', APP.token, { destraves: dest, fila: lerFila().length, hashLista: l ? l.h : '' }).then(function (r) {
+    if (dest.length && r.destravesRegistrados >= dest.length) lsDel('destraves');
+    guardarLista(r.estacao, r.lista); delete r.lista;
+    APP.sinc = r; lsPut('sinc', r);
+    if (LEIT.etapa === 'serial' && APP.usuario) pedirSerial();
+    atualizarRede();
+    return r;
+  }).catch(function (e) { if (e.sessao) sessaoCaiu(e); atualizarRede(); });
+}
+
+var _enviandoFila = false;
+function enviarFila() {
+  if (_enviandoFila || !lerFila().length) return Promise.resolve();
+  _enviandoFila = true;
+  return new Promise(function (fim) {
+    (function prox() {
+      var item = lerFila()[0];
+      if (!item) { _enviandoFila = false; atualizarRede(); return fim(); }
+      var dados = { idLeitura: item.idLeitura, serial: item.serial, ean: item.ean, origem: item.origem, horaTablet: item.horaTablet, offline: true };
+      chamar('registrarLeituraFila', item.cred, dados).then(function (r) {
+        gravarFila(lerFila().filter(function (x) { return x.idLeitura !== item.idLeitura; }));
+        if (!r.ok) {
+          var rec = lsJson('recusadas', []);
+          rec.push({ serial: item.serial, msg: r.msg, quando: item.horaTablet, quem: item.usuarioNome, est: item.estacaoNome });
+          lsPut('recusadas', rec);
+          mostrarRecusadas();
+        }
+        prox();
+      }).catch(function () { // sem rede ou servidor ocupado: tenta de novo no próximo ciclo
+        _enviandoFila = false; atualizarRede(); fim();
+      });
+    })();
+  });
+}
+setInterval(function () { if (lerFila().length) enviarFila(); atualizarRede(); if (!APP.usuario && LOG.semRede && _esp === 0) carregarLogin(); }, FILA_MS);
+setInterval(function () { if (APP.usuario) sincronizar(); }, SINC_MS);
+window.addEventListener('online', function () { enviarFila().then(sincronizar); atualizarRede(); if (!APP.usuario && LOG.semRede) carregarLogin(); });
+window.addEventListener('offline', atualizarRede);
+
+/* ================= Login ================= */
+var LOG = { estacao: '', modo: 'operador', uid: '', nome: '', dados: null };
+function tela(html) { $('raiz').innerHTML = '<div class="cartao">' + html + '</div>'; }
+function pendentesOutros() {
+  var f = lerFila();
+  return f.length ? [f.length + ' leitura(s) feitas sem rede aguardando envio (vão sozinhas)'] : [];
+}
+
+function iniciar() {
+  $('rodape').textContent = 'App de leitura ' + APP_VERSAO + ' · tablet ' + APP.dispositivo;
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
+  var tk = lsGet('token_app'), u = lsJson('usuario_app', null);
+  if (!tk) return carregarLogin();
+  espera(true);
+  chamar('retomarSessao', tk).then(function (r) {
+    espera(false); APP.token = tk; APP.usuario = Object.assign({}, u || {}, r.usuario); lsPut('usuario_app', APP.usuario);
+    if (r.trocarSenha) telaTroca(false); else abrirLeitura();
+  }).catch(function (e) {
+    espera(false);
+    if (e.rede && u) { APP.token = tk; APP.usuario = u; abrirLeitura(); return; } // sem rede: segue com a sessão guardada
+    lsDel('token_app'); lsDel('usuario_app'); carregarLogin();
+  });
+}
+
+function carregarLogin() {
+  mostrar('telaLogin', true); mostrar('telaLeitura', false);
+  enviarFila();
+  espera(true);
+  chamar('dadosLogin').then(function (d) {
+    espera(false); LOG.dados = d; LOG.semRede = false; mostrar('faixaTeste', !!d.baseTeste);
+    telaEstacoes();
+  }).catch(function (e) {
+    espera(false); LOG.semRede = !!e.rede;
+    tela('<div class="msg erro">' + esc(e.message) + '</div><p>Sem rede não é possível entrar. Confira o Wi-Fi.</p><button class="bloco" id="btDeNovo">Tentar de novo</button>' + botaoAjuda());
+    $('btDeNovo').onclick = carregarLogin; ligarAjuda();
+  });
+}
+function botaoAjuda() { return '<button class="claro bloco" id="btAjuda">Ajuda: fixar a tela / instalar</button>'; }
+function ligarAjuda() { if ($('btAjuda')) $('btAjuda').onclick = abrirAjuda; }
+
+function telaEstacoes() {
+  LOG.modo = 'operador';
+  var pend = pendentesOutros();
+  tela('<h2>Escolha a estação</h2>' +
+    (pend.length ? '<div class="msg alerta">' + esc(pend.join('; ')) + '.</div>' : '') +
+    '<div class="grade">' + LOG.dados.estacoes.map(function (e) {
       return '<button data-e="' + esc(e.codigo) + '">' + esc(e.nome) + '</button>';
-    }).join('') + '</div><div id="loginMsg"></div>');
-    raiz.querySelectorAll('[data-e]').forEach(function (b) { b.onclick = function () { L.estacao = b.getAttribute('data-e'); L.telaNomes(); }; });
-  };
+    }).join('') + '</div><div id="loginMsg"></div>' + botaoAjuda());
+  if (LOG.msg) { aviso('loginMsg', LOG.msg, 'erro'); LOG.msg = ''; }
+  document.querySelectorAll('[data-e]').forEach(function (b) { b.onclick = function () { LOG.estacao = b.getAttribute('data-e'); lsSet('ultimaEstacao', LOG.estacao); telaNomes(); }; });
+  ligarAjuda();
+}
 
-  L.telaNomes = function () {
+function telaNomes() {
+  espera(true);
+  chamar('listarUsuariosLogin', LOG.modo, LOG.estacao).then(function (lista) {
+    espera(false);
+    var est = LOG.dados.estacoes.filter(function (e) { return e.codigo === LOG.estacao; })[0];
+    tela('<h2>' + (LOG.modo === 'gestor' ? 'Acesso gestor' : 'Quem é você?') + '</h2><p>Estação: <b>' + esc(est ? est.nome : '') + '</b></p>' +
+      (lista.length ? '<div class="grade">' + lista.map(function (u) { return '<button data-u="' + esc(u.id) + '">' + esc(u.nome) + '</button>'; }).join('') + '</div>'
+        : '<div class="msg info">Nenhum usuário liberado aqui.</div>') +
+      '<div class="linha" style="margin-top:14px">' +
+      (LOG.modo === 'operador' ? '<button class="claro" id="btGestor">Acesso gestor</button>' : '<button class="claro" id="btOper">Operadores</button>') +
+      '<button class="sec" id="btVoltar">Voltar</button></div><div id="loginMsg"></div>');
+    document.querySelectorAll('[data-u]').forEach(function (b) { b.onclick = function () { LOG.uid = b.getAttribute('data-u'); LOG.nome = b.textContent; telaSenha(); }; });
+    if ($('btGestor')) $('btGestor').onclick = function () { LOG.modo = 'gestor'; telaNomes(); };
+    if ($('btOper')) $('btOper').onclick = function () { LOG.modo = 'operador'; telaNomes(); };
+    $('btVoltar').onclick = telaEstacoes;
+  }).catch(function (e) { espera(false); aviso('loginMsg', e.message, 'erro'); });
+}
+
+function telaSenha() {
+  tela('<h2>' + esc(LOG.nome) + '</h2><label>Senha</label><input id="senha" type="password" autocomplete="off">' +
+    '<button class="bloco" id="btEntrar">Entrar</button><button class="bloco sec" id="btVoltar">Voltar</button><div id="loginMsg"></div>');
+  $('senha').focus();
+  $('senha').onkeydown = function (ev) { if (ev.key === 'Enter') entrar(); };
+  $('btEntrar').onclick = entrar;
+  $('btVoltar').onclick = telaNomes;
+  function entrar() {
     espera(true);
-    chamar('listarUsuariosLogin', L.modo, L.estacao).then(function (lista) {
-      espera(false);
-      var est = L.dados.estacoes.filter(function (e) { return e.codigo === L.estacao; })[0];
-      var titulo = opts.portal === 'painel' ? 'Painel — quem é você?' : (L.modo === 'gestor' ? 'Acesso gestor' : 'Quem é você?');
-      tela('<h2>' + titulo + '</h2>' + (est ? '<p>Estação: <b>' + esc(est.nome) + '</b></p>' : '') +
-        (lista.length ? '<div class="grade">' + lista.map(function (u) { return '<button data-u="' + esc(u.id) + '">' + esc(u.nome) + '</button>'; }).join('') + '</div>'
-          : '<div class="msg info">Nenhum usuário liberado aqui.</div>') +
-        (opts.portal !== 'painel' ? '<div class="linha" style="margin-top:14px">' +
-          (L.modo === 'operador' ? '<button class="claro" id="btGestor">Acesso gestor</button>' : '<button class="claro" id="btOper">Operadores</button>') +
-          '<button class="sec" id="btVoltar">Voltar</button></div>' : '') + '<div id="loginMsg"></div>');
-      raiz.querySelectorAll('[data-u]').forEach(function (b) { b.onclick = function () { L.uid = b.getAttribute('data-u'); L.nome = b.textContent; L.telaSenha(); }; });
-      if ($('btGestor')) $('btGestor').onclick = function () { L.modo = 'gestor'; L.telaNomes(); };
-      if ($('btOper')) $('btOper').onclick = function () { L.modo = 'operador'; L.telaNomes(); };
-      if ($('btVoltar')) $('btVoltar').onclick = L.telaEstacoes;
-    }).catch(falhou);
-  };
-
-  L.telaSenha = function () {
-    tela('<h2>' + esc(L.nome) + '</h2><label>Senha</label><input id="senha" type="password" autocomplete="off" inputmode="text">' +
-      '<button class="bloco" id="btEntrar">Entrar</button><button class="bloco sec" id="btVoltar">Voltar</button><div id="loginMsg"></div>');
-    $('senha').focus();
-    $('senha').onkeydown = function (ev) { if (ev.key === 'Enter') entrar(); };
-    $('btEntrar').onclick = entrar;
-    $('btVoltar').onclick = L.telaNomes;
-    function entrar() {
-      espera(true);
-      chamar('entrar', { modo: L.modo, uid: L.uid, senha: $('senha').value, estacao: L.estacao, dispositivo: APP.dispositivo })
-        .then(function (r) {
-          espera(false); APP.token = r.token; APP.usuario = r.usuario; lsSet(chaveToken, r.token);
-          if (r.trocarSenha) L.telaTroca(); else opts.aoEntrar(r.usuario);
-        }).catch(function (e) { falhou(e); $('senha').value = ''; $('senha').focus(); });
-    }
-  };
-
-  L.telaTroca = function (voluntaria) {
-    tela('<h2>' + (voluntaria ? 'Trocar minha senha' : 'Crie sua senha') + '</h2>' +
-      (voluntaria ? '' : '<p>Você entrou com uma senha provisória. Crie a sua para continuar.</p>') +
-      '<label>Senha atual</label><input id="sAtual" type="password" autocomplete="off">' +
-      '<label>Nova senha</label><input id="sNova" type="password" autocomplete="off">' +
-      '<label>Repita a nova senha</label><input id="sNova2" type="password" autocomplete="off">' +
-      '<button class="bloco ok" id="btSalvar">Salvar</button>' +
-      '<button class="bloco sec" id="btCancelar">' + (voluntaria ? 'Cancelar' : 'Sair') + '</button><div id="loginMsg"></div>');
-    $('btSalvar').onclick = function () {
-      if ($('sNova').value !== $('sNova2').value) { aviso('loginMsg', 'As senhas novas não são iguais.', 'erro'); return; }
-      espera(true);
-      chamar('trocarSenha', APP.token, $('sAtual').value, $('sNova').value).then(function (r) {
-        espera(false); APP.usuario = r.usuario; opts.aoEntrar(r.usuario);
-      }).catch(falhou);
-    };
-    $('btCancelar').onclick = function () { if (voluntaria) opts.aoEntrar(APP.usuario); else L.sair(); };
-  };
-
-  L.sair = function () {
-    var tk = APP.token; APP.token = null; APP.usuario = null; lsDel(chaveToken);
-    if (tk) chamar('sair', tk).catch(function () {});
-    L.carregar();
-  };
-
-  return L;
+    chamar('entrar', { modo: LOG.modo, uid: LOG.uid, senha: $('senha').value, estacao: LOG.estacao, dispositivo: APP.dispositivo })
+      .then(function (r) {
+        espera(false); APP.token = r.token; APP.usuario = r.usuario;
+        lsSet('token_app', r.token); lsPut('usuario_app', r.usuario);
+        if (r.trocarSenha) telaTroca(false); else abrirLeitura();
+      }).catch(function (e) { espera(false); aviso('loginMsg', e.message, 'erro'); $('senha').value = ''; $('senha').focus(); });
+  }
 }
 
-/** Trata erro de servidor: sessão vencida volta ao login. */
-function tratarErro(e, login, idMsg) {
-  espera(false);
-  if (e.sessao) { alert(e.message.replace(/^SESSAO:\s*/, '')); login.sair(); return; }
-  if (e.troca) { login.telaTroca(); return; }
-  if (idMsg) aviso(idMsg, e.message, 'erro'); else alert(e.message);
+function telaTroca(voluntaria) {
+  pararCamera(); mostrar('telaLeitura', false); mostrar('telaLogin', true);
+  tela('<h2>' + (voluntaria ? 'Trocar minha senha' : 'Crie sua senha') + '</h2>' +
+    (voluntaria ? '' : '<p>Você entrou com uma senha provisória. Crie a sua para continuar.</p>') +
+    '<label>Senha atual</label><input id="sAtual" type="password" autocomplete="off">' +
+    '<label>Nova senha</label><input id="sNova" type="password" autocomplete="off">' +
+    '<label>Repita a nova senha</label><input id="sNova2" type="password" autocomplete="off">' +
+    '<button class="bloco ok" id="btSalvar">Salvar</button><button class="bloco sec" id="btCancelar">Sair</button><div id="loginMsg"></div>');
+  $('btSalvar').onclick = function () {
+    if ($('sNova').value !== $('sNova2').value) { aviso('loginMsg', 'As senhas novas não são iguais.', 'erro'); return; }
+    espera(true);
+    chamar('trocarSenha', APP.token, $('sAtual').value, $('sNova').value).then(function (r) {
+      espera(false); APP.usuario = r.usuario; lsPut('usuario_app', r.usuario); abrirLeitura();
+    }).catch(function (e) { espera(false); aviso('loginMsg', e.message, 'erro'); });
+  };
+  $('btCancelar').onclick = function () { sairDeVez(); };
 }
-</script>
 
-  <script>
-    var login = Login({ raiz: $('raiz'), portal: 'app', aoEntrar: abrir });
-    function abrir(u) {
-      $('raiz').innerHTML = '';
-      if (u.perfil !== 'ADMIN') { alert('Página só para administrador (entre por "Acesso gestor").'); login.sair(); return; }
-      mostrar('topo', true); mostrar('testes', true);
-      $('tNome').textContent = u.nome + (u.baseTeste ? ' — BASE DE TESTE' : '');
-      $('tInfo').textContent = u.perfilNome + ' · estação ' + u.estacaoNome;
-      atualizarFila();
+function sessaoCaiu(e) {
+  // a fila do tablet continua guardada e vai sozinha quando houver rede
+  pararCamera();
+  APP.token = null; APP.usuario = null; lsDel('token_app'); lsDel('usuario_app');
+  esconderSobres();
+  LOG.msg = (e && e.message ? e.message.replace(/^SESSAO:\s*/, '') : 'Sessão encerrada.') + ' Entre de novo.';
+  carregarLogin();
+}
+
+function sairDeVez() {
+  var tk = APP.token;
+  pararCamera();
+  APP.token = null; APP.usuario = null; lsDel('token_app'); lsDel('usuario_app');
+  if (tk) chamar('sair', tk).catch(function () {});
+  esconderSobres();
+  carregarLogin();
+}
+
+$('btSair').onclick = function () { sairDeVez(); }; // a fila fica no tablet e vai sozinha quando a rede voltar
+
+/* ================= Tela de leitura ================= */
+var LEIT = { etapa: 'serial', serial: '', origem: 'CAMERA', ocupado: false, ultimo: '', ultimoT: 0, ignorar: {}, modoConsulta: false };
+
+function leEan() { var s = sincLocal(); return !!(s && s.leEan && s.estacao === APP.usuario.estacao); }
+
+function abrirLeitura() {
+  mostrar('telaLogin', false); mostrar('telaLeitura', true);
+  mostrar('faixaTeste', !!APP.usuario.baseTeste);
+  $('tNome').textContent = APP.usuario.nome;
+  $('tEst').textContent = APP.usuario.estacaoNome + (APP.usuario.modo === 'gestor' ? ' · ' + APP.usuario.perfilNome : '');
+  $('resultado').innerHTML = '';
+  pedirSerial();
+  atualizarRede();
+  abrirCamera();
+  manterTelaLigada();
+  sincronizar().then(function () { pedirSerial(); return enviarFila(); });
+  mostrarRecusadas();
+}
+
+function pedirSerial() {
+  LEIT.etapa = 'serial'; LEIT.serial = '';
+  $('pedido').className = 'pedido';
+  $('pedido').innerHTML = 'Leia o SERIAL' + (leEan() ? '<small>depois o EAN da etiqueta de SKU</small>' : '');
+  mostrar('btCancelarEan', false);
+  $('manual').placeholder = 'Digitar serial (se a etiqueta não ler)';
+}
+function pedirEan(serial) {
+  LEIT.etapa = 'ean'; LEIT.serial = serial; $('resultado').innerHTML = '';
+  $('pedido').className = 'pedido ean';
+  $('pedido').innerHTML = 'Agora leia o EAN do SKU<small>serial ' + esc(serial) + '</small>';
+  mostrar('btCancelarEan', true);
+  $('manual').placeholder = 'Digitar EAN (13 dígitos)';
+}
+function dica(t) { $('dica').textContent = t || ''; if (t) { clearTimeout(dica._t); dica._t = setTimeout(function () { $('dica').textContent = ''; }, 4000); } }
+
+$('btCancelarEan').onclick = function () { pedirSerial(); dica('Peça cancelada. Leia o serial.'); };
+$('btManual').onclick = function () { var v = normal($('manual').value); $('manual').value = ''; if (v) aoLer(v, 'MANUAL'); };
+$('manual').onkeydown = function (ev) { if (ev.key === 'Enter') $('btManual').onclick(); };
+$('btCamera').onclick = function () { abrirCamera(); };
+
+/** Entrada única de códigos (câmera ou digitado). */
+function aoLer(txt, origem) {
+  txt = normal(txt);
+  if (!txt || LEIT.ocupado || !$('vermelha').classList.contains('oculto') || !$('travada').classList.contains('oculto')) return;
+  var agora = Date.now();
+  if (origem !== 'MANUAL') {
+    if (txt === LEIT.ultimo && agora - LEIT.ultimoT < 2500) return;     // mesma etiqueta parada na frente
+    if (LEIT.ignorar[txt] && agora - LEIT.ignorar[txt] < 8000) return;  // acabou de ser registrada
+  }
+  LEIT.ultimo = txt; LEIT.ultimoT = agora;
+  if (LEIT.modoConsulta) { LEIT.modoConsulta = false; return consultar(txt); }
+  if (LEIT.etapa === 'serial') {
+    if (RE_SERIAL.test(txt)) {
+      LEIT.origem = origem;
+      if (leEan()) { pedirEan(txt); bip(900, 0.06, 1); return; }
+      return enviar({ serial: txt });
     }
-    $('btSair').onclick = function () { fecharCamera(); mostrar('topo', false); mostrar('testes', false); login.sair(); };
-    document.querySelectorAll('[data-a]').forEach(function (b) {
-      b.onclick = function () {
-        document.querySelectorAll('.aba').forEach(function (a) { a.classList.add('oculto'); });
-        document.querySelectorAll('[data-a]').forEach(function (x) { x.classList.remove('ativo'); });
-        mostrar(b.getAttribute('data-a'), true); b.classList.add('ativo');
-        if (b.getAttribute('data-a') !== 'aCam') fecharCamera();
-      };
+    if (RE_EAN13.test(txt)) return dica('Isso é um EAN. Leia primeiro o SERIAL.');
+    return dica('Código não reconhecido: ' + txt);
+  }
+  // etapa EAN
+  if (RE_EAN13.test(txt)) return enviar({ serial: LEIT.serial, ean: txt });
+  if (RE_SERIAL.test(txt)) {
+    if (txt !== LEIT.serial) { LEIT.origem = origem; pedirEan(txt); dica('Trocou de peça: agora vale o serial ' + txt); }
+    return;
+  }
+  dica('Código não reconhecido: ' + txt);
+}
+window.__lerCodigo = aoLer; // usado nos testes
+
+function enviar(p) {
+  LEIT.ocupado = true; LEIT.enviado = p.serial;
+  var item = { idLeitura: uuid(), serial: p.serial, ean: p.ean || '', origem: LEIT.origem === 'MANUAL' ? 'MANUAL' : 'CAMERA', horaTablet: Date.now() };
+  $('pedido').className = 'pedido'; $('pedido').innerHTML = 'Registrando ' + esc(p.serial) + '…'; $('resultado').innerHTML = '';
+  var t0 = Date.now();
+  var envio = (navigator.onLine === false) ? Promise.reject(Object.assign(new Error('offline'), { rede: true })) : chamar('registrarLeitura', APP.token, item);
+  envio.then(function (r) {
+    LEIT.ocupado = false;
+    if (r.ok) { guardarHistorico(item.serial); telaVerde(r.serial, r.sku, Date.now() - t0, false); }
+    else telaVermelha(p.serial + ' — ' + r.msg);
+  }).catch(function (e) {
+    LEIT.ocupado = false;
+    if (e.sessao) return sessaoCaiu(e);
+    if (e.troca) return telaTroca(false);
+    if (!e.rede) return telaVermelha(p.serial + ' — ' + e.message + ' Leia de novo.');
+    leituraSemRede(item);
+  });
+}
+
+/** Sem rede: confere o que dá no tablet e guarda na fila. */
+function leituraSemRede(item) {
+  var s = sincLocal() || {}, est = APP.usuario.estacao, l = listaEstacao(est), sr = item.serial, sku = '';
+  var verm = function (m) { telaVermelha(sr + ' — ' + m + ' (sem rede)'); };
+  if (s.travadas && s.travadas[sr]) return verm(s.travadas[sr]);
+  if (jaLidaAqui(sr)) return verm('Peça já registrada nesta operação (neste tablet).');
+  var skuEan = item.ean && s.eans ? s.eans[item.ean] : '';
+  if (item.ean && s.eans && !skuEan) return verm('EAN não cadastrado: ' + item.ean + '.');
+  if (l) {
+    sku = l.sku[sr];
+    if (!sku) return verm('Peça fora da lista desta estação: já registrada aqui, encerrada ou serial desconhecido.');
+    if (item.ean && skuEan !== sku) return verm('EAN de outro SKU. Esperado: ' + sku + ' — lido: ' + skuEan + '.');
+  }
+  var cred = s.cred;
+  if (!cred || cred.uid !== APP.usuario.id || cred.est !== est) return verm('Este tablet ainda não sincronizou com você logado: aguarde a rede.');
+  if (Number(cred.ate) < Date.now()) return verm('Autorização para guardar leituras venceu (muito tempo sem rede).');
+  if (travado()) return telaTravada();
+  item.offline = true; item.cred = cred; item.estacao = est; item.estacaoNome = APP.usuario.estacaoNome; item.usuarioNome = APP.usuario.nome;
+  var f = lerFila(); f.push(item); gravarFila(f);
+  guardarHistorico(sr);
+  telaVerde(sr, sku || skuEan || '', 0, true);
+}
+
+function chaveHist() { return 'hist_' + (APP.usuario ? APP.usuario.estacao : ''); }
+function guardarHistorico(serial) {
+  var h = lsJson(chaveHist(), []); h.push([serial, Date.now()]); if (h.length > 400) h = h.slice(-400); lsPut(chaveHist(), h);
+}
+function jaLidaAqui(serial) {
+  if (lerFila().some(function (x) { return x.serial === serial && x.estacao === APP.usuario.estacao; })) return true;
+  return lsJson(chaveHist(), []).some(function (x) { return x[0] === serial; });
+}
+
+function telaVerde(serial, sku, ms, pendente) {
+  sinalOk();
+  LEIT.ignorar[serial] = Date.now();
+  if (LEIT.serial) LEIT.ignorar[normal(LEIT.serial)] = Date.now();
+  $('resultado').innerHTML = '<div class="res verde"><div class="grande">✔ REGISTRADO</div>' +
+    '<div class="det">' + esc(serial) + (sku ? ' · ' + esc(sku) : '') + ' · ' + esc(APP.usuario.estacaoNome) + (ms ? ' · ' + msTxt(ms) : '') + '</div>' +
+    (pendente ? '<div class="pend">⏳ pendente — sem rede, envia sozinho</div>' : '') +
+    '<div><button class="nc" disabled>Não conforme</button><div class="nctxt">disponível na Fase 3</div></div></div>';
+  pedirSerial();
+}
+
+function telaVermelha(motivo, lista) {
+  sinalErro();
+  $('resultado').innerHTML = '';
+  $('vMotivo').textContent = motivo;
+  if (lista) { $('vLista').innerHTML = lista; mostrar('vLista', true); } else mostrar('vLista', false);
+  mostrar('vermelha', true);
+  $('btCiente').onclick = function () {
+    mostrar('vermelha', false);
+    if (lista) lsDel('recusadas');
+    else if (LEIT.enviado) LEIT.ignorar[LEIT.enviado] = Date.now(); // câmera ainda na mesma peça: não repete o vermelho
+    pedirSerial();
+    mostrarRecusadas();
+  };
+}
+
+function mostrarRecusadas() {
+  var rec = lsJson('recusadas', []);
+  if (!APP.usuario || !rec.length || !$('vermelha').classList.contains('oculto') || LEIT.ocupado || $('telaLeitura').classList.contains('oculto')) return;
+  telaVermelha(rec.length + ' leitura(s) feita(s) sem rede foram RECUSADAS pelo servidor:',
+    rec.map(function (r) { return '<div><b>' + esc(r.serial) + '</b> (' + esc(horaTxt(r.quando)) + (r.quem ? ', ' + esc(r.quem) : '') + (r.est ? ', ' + esc(r.est) : '') + '): ' + esc(r.msg) + '</div>'; }).join(''));
+}
+
+function esconderSobres() { mostrar('vermelha', false); mostrar('travada', false); $('modal').innerHTML = ''; }
+
+/* ---- trava e destrave ---- */
+function telaTravada() {
+  sinalErro();
+  var s = sincLocal() || {};
+  $('trMotivo').textContent = 'Mais de ' + (s.travaH || 2) + ' h sem falar com o servidor (último contato: ' + (ultimoContato() ? horaTxt(ultimoContato()) : 'nunca') + '). ' + lerFila().length + ' leitura(s) aguardando envio.';
+  aviso('trMsg', '');
+  mostrar('travada', true);
+  pedirSerial();
+}
+$('btTentar').onclick = function () {
+  aviso('trMsg', 'Tentando…', 'info');
+  chamar('ping').then(function () {
+    mostrar('travada', false); enviarFila().then(sincronizar);
+    dica('Sincronizado. Leia a peça de novo.');
+  }).catch(function (e) {
+    if (e.rede) aviso('trMsg', 'Ainda sem rede.', 'erro');
+    else { mostrar('travada', false); enviarFila().then(sincronizar); } // servidor respondeu: rede ok
+  });
+};
+$('btDestravar').onclick = function () {
+  var s = sincLocal() || {};
+  if (!s.destrave) { aviso('trMsg', 'Senha de destrave não cadastrada (Parâmetros → SENHA_DESTRAVE). Aguarde a rede voltar.', 'erro'); return; }
+  abrirModal('<h3>Destravar tablet</h3><p>Senha de destrave do supervisor:</p><input id="dSenha" type="password" autocomplete="off">' +
+    '<div class="linha" style="margin-top:10px"><button class="ok" id="dOk">Destravar</button><button class="sec" id="dCanc">Cancelar</button></div><div id="dMsg"></div>');
+  $('dSenha').focus();
+  $('dCanc').onclick = fecharModal;
+  $('dSenha').onkeydown = function (ev) { if (ev.key === 'Enter') $('dOk').onclick(); };
+  $('dOk').onclick = function () {
+    var senha = $('dSenha').value;
+    hashDestrave(senha, s.destrave.sal, s.destrave.iter).then(function (h) {
+      if (h !== s.destrave.hash) { aviso('dMsg', 'Senha incorreta.', 'erro'); $('dSenha').value = ''; return; }
+      var ate = Date.now() + (s.destraveMin || 30) * 60000;
+      lsSet('destraveAte', String(ate));
+      var d = lsJson('destraves', []); d.push({ quando: Date.now(), fila: lerFila().length, dispositivo: APP.dispositivo }); lsPut('destraves', d);
+      fecharModal(); mostrar('travada', false); atualizarRede();
+      dica('Destravado até ' + horaTxt(ate).slice(6) + '. Leia a peça de novo.');
+    }).catch(function () { aviso('dMsg', 'Este aparelho não consegue conferir a senha (navegador sem criptografia).', 'erro'); });
+  };
+};
+function hashDestrave(senha, sal, iter) {
+  var enc = new TextEncoder();
+  function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+  var h = sal + '|' + senha, i = 0;
+  return new Promise(function (ok, falha) {
+    (function passo() {
+      if (i >= iter) return ok(h);
+      i++;
+      crypto.subtle.digest('SHA-256', enc.encode(h + '|' + sal)).then(function (b) { h = hex(b); passo(); }, falha);
+    })();
+  });
+}
+
+/* ---- modal genérico, confirmação, consulta, ajuda ---- */
+function abrirModal(html) { $('modal').innerHTML = '<div class="modal-fundo"><div class="modal">' + html + '</div></div>'; }
+function fecharModal() { $('modal').innerHTML = ''; }
+function confirmar(titulo, texto, rotulo, acao) {
+  abrirModal('<h3>' + esc(titulo) + '</h3><p>' + esc(texto) + '</p><div class="linha"><button class="perigo" id="cSim">' + esc(rotulo) + '</button><button class="sec" id="cNao">Voltar</button></div>');
+  $('cSim').onclick = function () { fecharModal(); acao(); };
+  $('cNao').onclick = fecharModal;
+}
+
+$('btConsulta').onclick = function () {
+  abrirModal('<h3>Consultar serial</h3><div class="linha"><input id="qSerial" placeholder="Serial" autocomplete="off" style="flex:3"><button id="qOk">Consultar</button></div>' +
+    '<button class="claro bloco" id="qCam">Ler pela câmera</button><div id="qRes"></div><button class="sec bloco" id="qFechar">Fechar</button>');
+  $('qOk').onclick = function () { consultar($('qSerial').value); };
+  $('qSerial').onkeydown = function (ev) { if (ev.key === 'Enter') $('qOk').onclick(); };
+  $('qCam').onclick = function () { LEIT.modoConsulta = true; fecharModal(); dica('Aponte para o serial a consultar.'); };
+  $('qFechar').onclick = fecharModal;
+};
+function consultar(serial) {
+  serial = normal(serial);
+  if (!$('qRes')) $('btConsulta').onclick();
+  $('qSerial').value = serial;
+  aviso('qRes', 'Consultando…', 'info');
+  chamar('consultarSerial', APP.token, serial).then(function (r) {
+    $('qRes').innerHTML = '<table>' +
+      '<tr><td>Serial</td><td><b>' + esc(r.serial) + '</b>' + (r.posicao ? ' (' + esc(r.posicao) + ')' : '') + '</td></tr>' +
+      '<tr><td>SKU</td><td>' + esc(r.sku) + '</td></tr>' +
+      '<tr><td>Situação</td><td><b>' + esc(r.situacao) + '</b>' + (r.ncs ? ' · <span style="color:#c92a2a">' + r.ncs + ' NC aberta</span>' : '') + '</td></tr>' +
+      '<tr><td>Próxima operação</td><td>' + esc(r.proxima || '—') + '</td></tr>' +
+      '<tr><td>Registros</td><td>' + (r.feitas.length ? r.feitas.map(function (f) { return esc(f.op) + ' — ' + esc(f.quando); }).join('<br>') : 'nenhum') + '</td></tr></table>';
+  }).catch(function (e) {
+    if (e.sessao) { fecharModal(); return sessaoCaiu(e); }
+    aviso('qRes', e.rede ? 'Sem rede: a consulta precisa do servidor.' : e.message, 'erro');
+  });
+}
+
+function abrirAjuda() {
+  abrirModal('<h3>Ajuda — instalar e fixar a tela</h3>' +
+    '<p><b>Android (Chrome)</b></p><ol class="ajuda">' +
+    '<li>No Chrome, abra este endereço, toque em ⋮ → <b>Adicionar à tela inicial</b> (ou Instalar app).</li>' +
+    '<li>Abra o app pelo ícone novo e permita a câmera.</li>' +
+    '<li>Configurações → Segurança → <b>Fixar app</b> (ou "Fixação de tela") → ligar.</li>' +
+    '<li>Abra o app, toque no botão de apps recentes, toque no ícone do app → <b>Fixar</b>.</li>' +
+    '<li>Para soltar: segure Voltar + Visão geral (ou deslize e segure), e use o PIN do tablet.</li></ol>' +
+    '<p><b>iPhone / iPad (Safari)</b></p><ol class="ajuda">' +
+    '<li>No Safari, toque em Compartilhar → <b>Adicionar à Tela de Início</b>.</li>' +
+    '<li>Ajustes → Acessibilidade → <b>Acesso Guiado</b> → ligar e definir código.</li>' +
+    '<li>Abra o app e clique 3 vezes no botão lateral → Iniciar.</li></ol>' +
+    '<p class="msg info">Deixe o tablet na tomada: a tela fica sempre ligada enquanto o app está aberto.</p>' +
+    '<button class="sec bloco" id="aFechar">Fechar</button>');
+  $('aFechar').onclick = fecharModal;
+}
+$('btAjuda2').onclick = abrirAjuda;
+
+/* ================= Câmera ================= */
+var CAM = { stream: null, timer: null, zx: null };
+function carregarZXing() {
+  return new Promise(function (ok, falha) {
+    if (window.ZXing) return ok();
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js';
+    s.onload = ok; s.onerror = function () { falha(new Error('não carregou o leitor (sem rede?)')); };
+    document.head.appendChild(s);
+  });
+}
+function camMsg(t) { $('camMsg').textContent = t || ''; mostrar('camMsg', !!t); mostrar('video', !t); document.querySelector('.mira').classList.toggle('oculto', !!t); }
+function abrirCamera() {
+  pararCamera(); camMsg('');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { camMsg('Câmera indisponível neste navegador. Use o campo de digitar.'); return; }
+  var temBD = 'BarcodeDetector' in window;
+  var p = temBD ? BarcodeDetector.getSupportedFormats().then(function (f) { return f.indexOf('code_128') >= 0 && f.indexOf('ean_13') >= 0; }).catch(function () { return false; }) : Promise.resolve(false);
+  p.then(function (nativo) { return nativo ? abrirNativo() : carregarZXing().then(abrirZXing); })
+    .catch(function (e) { camMsg('Câmera não abriu (' + (e.name === 'NotAllowedError' ? 'permissão negada' : (e.message || e.name || 'erro')) + '). Toque em "Reabrir câmera" ou digite o código.'); });
+}
+var RESTR = { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+function abrirNativo() {
+  return navigator.mediaDevices.getUserMedia(RESTR).then(function (st) {
+    CAM.stream = st; var v = $('video'); v.srcObject = st;
+    return v.play().then(function () {
+      var det = new BarcodeDetector({ formats: ['code_128', 'ean_13'] }), ocupado = false;
+      CAM.timer = setInterval(function () {
+        if (ocupado || v.readyState < 2 || LEIT.ocupado) return; ocupado = true;
+        det.detect(v).then(function (cods) { if (cods.length) aoLer(cods[0].rawValue, 'CAMERA'); }).catch(function () {}).then(function () { ocupado = false; });
+      }, 120);
     });
-    function escrever(id, txt) { var e = $(id); e.textContent += txt + '\n'; e.scrollTop = e.scrollHeight; }
-    function registrar(teste, idLog) {
-      chamar('registrarResultadoTeste', APP.token, teste, { dispositivo: APP.dispositivo, navegador: navigator.userAgent, resultado: $(idLog).textContent.slice(-1800) })
-        .then(function () { alert('Registrado no Log.'); }).catch(function (e) { tratarErro(e, login); });
-    }
+  });
+}
+function abrirZXing() {
+  var hints = new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.EAN_13]);
+  CAM.zx = new ZXing.BrowserMultiFormatReader(hints, 150);
+  return CAM.zx.decodeFromConstraints(RESTR, 'video', function (res) { if (res && !LEIT.ocupado) aoLer(res.getText(), 'CAMERA'); });
+}
+function pararCamera() {
+  if (CAM.timer) clearInterval(CAM.timer); CAM.timer = null;
+  if (CAM.stream) CAM.stream.getTracks().forEach(function (t) { t.stop(); }); CAM.stream = null;
+  if (CAM.zx) { try { CAM.zx.reset(); } catch (e) {} CAM.zx = null; }
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) pararCamera();
+  else if (APP.usuario && !$('telaLeitura').classList.contains('oculto')) { abrirCamera(); manterTelaLigada(); enviarFila(); }
+});
 
-    // ================= 1. CÂMERA =================
-    $('camUA').textContent = navigator.userAgent;
-    var CAM = { stream: null, timer: null, zx: null, inicio: 0, ultimo: '', lidos: {} };
-    function carregarZXing() {
-      return new Promise(function (ok, falha) {
-        if (window.ZXing) return ok();
-        var s = document.createElement('script');
-        s.src = 'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js';
-        s.onload = ok; s.onerror = function () { falha(new Error('Não carregou a biblioteca ZXing')); };
-        document.head.appendChild(s);
-      });
-    }
-    function aoLer(texto, formato, metodo) {
-      var agora = Date.now();
-      if (texto === CAM.ultimo && agora - (CAM.lidos[texto] || 0) < 2500) return; // mesma etiqueta parada na frente
-      CAM.ultimo = texto; CAM.lidos[texto] = agora;
-      var tipo = /^\d{6}[PT]\d{3}$/.test(texto) ? 'SERIAL OK' : (/^\d{13}$/.test(texto) ? 'EAN13 OK' : 'outro formato');
-      escrever('camLog', msTxt(agora - CAM.inicio) + ' | ' + metodo + ' | ' + formato + ' | ' + texto + ' | ' + tipo);
-      if (navigator.vibrate) navigator.vibrate(80);
-    }
-    $('camAbrir').onclick = function () {
-      fecharCamera(); aviso('camMsg', '');
-      CAM.inicio = Date.now(); CAM.ultimo = '';
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { aviso('camMsg', 'Este navegador não dá acesso à câmera aqui.', 'erro'); escrever('camLog', 'FALHA: sem mediaDevices'); return; }
-      var temBD = 'BarcodeDetector' in window;
-      var p = temBD ? BarcodeDetector.getSupportedFormats().then(function (f) { return f.indexOf('code_128') >= 0 && f.indexOf('ean_13') >= 0; }) : Promise.resolve(false);
-      p.then(function (usarNativo) {
-        if (usarNativo) return abrirNativo();
-        return carregarZXing().then(abrirZXing);
-      }).catch(function (e) {
-        aviso('camMsg', 'Câmera falhou: ' + e.name + ' — ' + e.message, 'erro');
-        escrever('camLog', 'FALHA: ' + e.name + ' ' + e.message);
-      });
-    };
-    function abrirNativo() {
-      return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
-        .then(function (st) {
-          CAM.stream = st; var v = $('video'); v.srcObject = st; mostrar('video', true);
-          return v.play().then(function () {
-            escrever('camLog', 'Câmera aberta em ' + msTxt(Date.now() - CAM.inicio) + ' (leitor nativo do Android/Chrome)');
-            var det = new BarcodeDetector({ formats: ['code_128', 'ean_13'] }), ocupado = false;
-            CAM.timer = setInterval(function () {
-              if (ocupado || v.readyState < 2) return; ocupado = true;
-              det.detect(v).then(function (cods) { cods.forEach(function (c) { aoLer(c.rawValue, c.format, 'nativo'); }); })
-                .catch(function () {}).then(function () { ocupado = false; });
-            }, 120);
-          });
-        });
-    }
-    function abrirZXing() {
-      var hints = new Map();
-      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.EAN_13]);
-      CAM.zx = new ZXing.BrowserMultiFormatReader(hints, 150);
-      mostrar('video', true);
-      escrever('camLog', 'Usando ZXing (leitor em JavaScript)');
-      return CAM.zx.decodeFromConstraints({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } }, 'video', function (res) {
-        if (res) aoLer(res.getText(), String(ZXing.BarcodeFormat[res.getBarcodeFormat()]), 'zxing');
-      }).then(function () { escrever('camLog', 'Câmera aberta em ' + msTxt(Date.now() - CAM.inicio)); });
-    }
-    function fecharCamera() {
-      if (CAM.timer) clearInterval(CAM.timer); CAM.timer = null;
-      if (CAM.stream) CAM.stream.getTracks().forEach(function (t) { t.stop(); }); CAM.stream = null;
-      if (CAM.zx) { try { CAM.zx.reset(); } catch (e) {} CAM.zx = null; }
-      mostrar('video', false);
-    }
-    $('camFechar').onclick = fecharCamera;
-    $('camReg').onclick = function () { registrar('câmera', 'camLog'); };
+var WL = null;
+function manterTelaLigada() { try { if (navigator.wakeLock && !WL) navigator.wakeLock.request('screen').then(function (w) { WL = w; w.addEventListener('release', function () { WL = null; }); }).catch(function () {}); } catch (e) {} }
 
-    // ================= 2. TEMPO =================
-    $('tpPing').onclick = function () {
-      var tempos = [], i = 0;
-      (function prox() {
-        if (i++ >= 5) { escrever('tpLog', 'Rede (ida e volta): ' + tempos.map(msTxt).join(', ')); return; }
-        var t = Date.now(); chamar('ping').then(function () { tempos.push(Date.now() - t); prox(); }).catch(function (e) { escrever('tpLog', 'Erro: ' + e.message); });
-      })();
-    };
-    $('tpRodar').onclick = function () {
-      aviso('tpMsg', 'Buscando peças da estação ' + APP.usuario.estacaoNome + '…', 'info');
-      chamar('pecasParaTeste', APP.token, 10).then(function (pecas) {
-        if (!pecas.length) { aviso('tpMsg', 'Nenhuma peça pronta para esta estação na base de teste. Entre por outra estação (ex.: Vácuo, Selagem).', 'erro'); return; }
-        aviso('tpMsg', 'Rodando ' + pecas.length + ' leituras…', 'info');
-        var res = [], i = 0;
-        (function prox() {
-          if (i >= pecas.length) return fim();
-          var p = pecas[i++], id = uuid(), t0 = Date.now();
-          var dados = { serial: p.serial, ean: p.ean, origem: 'CAMERA', idLeitura: id, horaTablet: Date.now() };
-          chamar('registrarLeitura', APP.token, dados).then(function (c) {
-            var t1 = Date.now();
-            res.push({ s: p.serial, tot: t1 - t0, srv: c.ms, erro: c.ok ? '' : c.msg });
-            escrever('tpLog', p.serial + ' | ' + msTxt(t1 - t0) + ' (servidor ' + c.ms + ' ms)' + (c.ok ? '' : ' RECUSADA: ' + c.msg));
-            prox();
-          }).catch(function (e) { escrever('tpLog', 'Erro: ' + e.message); prox(); });
-        })();
-        function fim() {
-          var ok = res.filter(function (r) { return !r.erro; });
-          if (!ok.length) { aviso('tpMsg', 'Nenhuma leitura concluída.', 'erro'); return; }
-          var v = ok.map(function (r) { return r.tot; }).sort(function (a, b) { return a - b; });
-          var sv = ok.map(function (r) { return r.srv; }).sort(function (a, b) { return a - b; });
-          var media = function (a) { return Math.round(a.reduce(function (s, x) { return s + x; }, 0) / a.length); };
-          var txt = 'Leitura completa (o que o operador espera): média ' + msTxt(media(v)) + ', 90% até ' + msTxt(v[Math.floor(v.length * 0.9)]) + ', máx ' + msTxt(v[v.length - 1]) +
-            '\nDisso, servidor: média ' + msTxt(media(sv)) + ' (o resto é rede)';
-          escrever('tpLog', '---\n' + txt);
-          aviso('tpMsg', txt, media(v) <= 2000 ? 'ok' : 'erro');
-        }
-      }).catch(function (e) { tratarErro(e, login, 'tpMsg'); });
-    };
-    $('tpReg').onclick = function () { registrar('tempo ponta a ponta', 'tpLog'); };
-
-    // ================= 3. SEM REDE =================
-    function chaveFila() { return 'fila_' + (APP.usuario ? APP.usuario.id : ''); }
-    function lerFila() { try { return JSON.parse(lsGet(chaveFila()) || '[]'); } catch (e) { return []; } }
-    function gravarFila(f) { lsSet(chaveFila(), JSON.stringify(f)); atualizarFila(); }
-    function atualizarFila() {
-      $('offRede').textContent = navigator.onLine ? 'conectado' : 'SEM REDE';
-      $('offQtd').textContent = lerFila().length;
-      $('offLS').textContent = LS ? 'funciona' : 'BLOQUEADO (fila não sobrevive a recarregar)';
-    }
-    window.addEventListener('online', function () { atualizarFila(); escrever('offLog', 'Rede voltou: enviando fila…'); enviarFila(); });
-    window.addEventListener('offline', function () { atualizarFila(); escrever('offLog', 'Rede caiu.'); });
-    var ultimaEnviada = null, enviando = false;
-    $('offPor').onclick = function () {
-      chamar('pecasParaTeste', APP.token, 3).then(function (pecas) {
-        if (!pecas.length) { aviso('offMsg', 'Nenhuma peça pronta para esta estação na base de teste.', 'erro'); return; }
-        var f = lerFila();
-        pecas.forEach(function (p) { f.push({ idLeitura: uuid(), serial: p.serial, ean: p.ean, origem: 'CAMERA', horaTablet: Date.now(), offline: true }); });
-        gravarFila(f); escrever('offLog', pecas.length + ' leituras na fila: ' + pecas.map(function (p) { return p.serial; }).join(', '));
-      }).catch(function (e) { tratarErro(e, login, 'offMsg'); });
-    };
-    function enviarFila() {
-      if (enviando) return; enviando = true;
-      (function prox() {
-        var f = lerFila();
-        if (!f.length) { enviando = false; escrever('offLog', 'Fila vazia.'); return; }
-        var item = f[0];
-        chamar('registrarLeitura', APP.token, item).then(function (r) {
-          var f2 = lerFila().filter(function (x) { return x.idLeitura !== item.idLeitura; });
-          gravarFila(f2); ultimaEnviada = item;
-          escrever('offLog', item.serial + ' → ' + (r.ok ? (r.repetida ? 'JÁ GRAVADA (não duplicou)' : 'gravada') : 'RECUSADA: ' + r.msg));
-          prox();
-        }).catch(function (e) {
-          enviando = false;
-          if (e.sessao || e.troca) return tratarErro(e, login, 'offMsg');
-          escrever('offLog', 'Sem conexão — continua na fila (' + lerFila().length + '). ' + e.message);
-        });
-      })();
-    }
-    $('offEnviar').onclick = enviarFila;
-    $('offRepetir').onclick = function () {
-      if (!ultimaEnviada) { aviso('offMsg', 'Envie a fila primeiro.', 'erro'); return; }
-      chamar('registrarLeitura', APP.token, ultimaEnviada).then(function (r) {
-        escrever('offLog', 'Reenvio de ' + ultimaEnviada.serial + ' → ' + (r.repetida ? 'JÁ GRAVADA (não duplicou) — OK' : (r.ok ? 'GRAVOU DE NOVO — FALHA' : 'recusada: ' + r.msg)));
-      }).catch(function (e) { escrever('offLog', 'Erro: ' + e.message); });
-    };
-    $('offLimpar').onclick = function () { if (confirm('Apagar a fila deste usuário?')) gravarFila([]); };
-    $('offReg').onclick = function () { registrar('sem rede', 'offLog'); };
-
-    // ================= 4. IMPRESSÃO =================
-    var IMP = { zpl: '', dados: null, lay: null, impressora: null };
-    var BP = 'http://127.0.0.1:9100';
-    $('impCalib').onclick = function () {
-      chamar('gerarZplCalibracao', APP.token, $('impRolo').value).then(function (z) { IMP.zpl = z; $('impTexto').value = z; escrever('impLog', 'Calibração gerada.'); })
-        .catch(function (e) { tratarErro(e, login, 'impMsg'); });
-    };
-    $('impGerar').onclick = function () {
-      chamar('gerarZplTeste', APP.token, $('impRolo').value).then(function (r) { IMP.zpl = r.par; IMP.dados = r.dados; IMP.lay = { serie: r.laySerie, sku: r.laySku }; $('impTexto').value = r.par; escrever('impLog', 'Par gerado: ' + r.dados.serial); })
-        .catch(function (e) { tratarErro(e, login, 'impMsg'); });
-    };
-    $('impDetectar').onclick = function () {
-      var t = Date.now();
-      fetch(BP + '/default?type=printer', { method: 'GET' }).then(function (r) { return r.text(); }).then(function (txt) {
-        if (!txt) throw new Error('Browser Print respondeu, mas sem impressora padrão');
-        IMP.impressora = JSON.parse(txt);
-        escrever('impLog', 'Impressora: ' + IMP.impressora.name + ' (' + IMP.impressora.connection + ') em ' + msTxt(Date.now() - t));
-        aviso('impMsg', 'Impressora encontrada: ' + IMP.impressora.name, 'ok');
-      }).catch(function (e) {
-        escrever('impLog', 'Browser Print não respondeu: ' + e.message);
-        aviso('impMsg', 'Não achei o Zebra Browser Print. Ele está instalado e aberto? Se estiver, o navegador pode estar bloqueando a ligação com o computador (ver Console).', 'erro');
-      });
-    };
-    $('impZpl').onclick = function () {
-      var z = $('impTexto').value || IMP.zpl;
-      if (!z) { aviso('impMsg', 'Gere o ZPL primeiro.', 'erro'); return; }
-      if (!IMP.impressora) { aviso('impMsg', 'Detecte a impressora primeiro.', 'erro'); return; }
-      var t = Date.now();
-      fetch(BP + '/write', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ device: IMP.impressora, data: z }) })
-        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); escrever('impLog', 'ZPL enviado em ' + msTxt(Date.now() - t)); aviso('impMsg', 'Enviado para a Zebra.', 'ok'); })
-        .catch(function (e) { escrever('impLog', 'Falha ao enviar ZPL: ' + e.message); aviso('impMsg', 'Falha ao enviar: ' + e.message, 'erro'); });
-    };
-    $('impBaixar').onclick = function () {
-      var z = $('impTexto').value || IMP.zpl;
-      if (!z) { aviso('impMsg', 'Gere o ZPL primeiro.', 'erro'); return; }
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([z], { type: 'text/plain' }));
-      a.download = 'etiquetas_teste.zpl'; document.body.appendChild(a); a.click(); a.remove();
-      escrever('impLog', 'Arquivo .zpl baixado.');
-    };
-    // ---- PDF 10x5: desenha a MESMA disposição usada no ZPL (pontos de 203 dpi = 8 por mm) em SVG.
-    // Um único SVG por página, com o giro feito dentro do SVG: a impressão do navegador não corta nada.
-    function imgCodigo(txt, formato, mod, altura) {
-      var c = document.createElement('canvas');
-      JsBarcode(c, txt, { format: formato, width: mod, height: altura, displayValue: formato === 'EAN13', margin: 0, fontSize: 26, textMargin: 2 });
-      return { url: c.toDataURL('image/png'), w: c.width, h: c.height };
-    }
-    function quebrar(txt, largura, alt, linhas) {
-      var max = Math.max(1, Math.floor(largura / (alt * 0.52))), saida = [], atual = '';
-      String(txt || '').split(/\s+/).forEach(function (p) {
-        if ((atual + ' ' + p).trim().length > max && atual) { saida.push(atual); atual = p; } else atual = (atual + ' ' + p).trim();
-      });
-      if (atual) saida.push(atual);
-      return saida.slice(0, linhas);
-    }
-    function svgEtiqueta(lay, girar) {
-      var W = girar ? lay.h : lay.w, H = girar ? lay.w : lay.h, p = [];
-      var fonte = 'font-family="Arial Narrow, Arial, Helvetica, sans-serif" font-weight="bold"';
-      lay.el.forEach(function (e) {
-        if (e.k === 'box') {
-          if (e.h === 0) p.push('<rect x="' + e.x + '" y="' + e.y + '" width="' + e.w + '" height="' + e.esp + '"/>');
-          else if (e.esp >= Math.min(e.w, e.h)) p.push('<rect x="' + e.x + '" y="' + e.y + '" width="' + e.w + '" height="' + e.h + '"/>');
-          else p.push('<rect x="' + (e.x + e.esp / 2) + '" y="' + (e.y + e.esp / 2) + '" width="' + (e.w - e.esp) + '" height="' + (e.h - e.esp) + '" fill="none" stroke="#000" stroke-width="' + e.esp + '"/>');
-        } else if (e.k === 't') {
-          var pos = e.rot === 'B' ? ' transform="translate(' + e.x + ',' + (e.y + (e.len || 0)) + ') rotate(-90)" x="0" y="0"' : ' x="' + e.x + '" y="' + e.y + '"';
-          var ajuste = e.rot === 'B' && e.len && String(e.txt).length * e.h * 0.55 > e.len ? ' textLength="' + e.len + '" lengthAdjust="spacingAndGlyphs"' : '';
-          p.push('<text' + pos + ajuste + ' font-size="' + e.h + '" dominant-baseline="hanging" ' + fonte + (e.inv ? ' fill="#fff"' : '') + '>' + esc(e.txt) + '</text>');
-        } else if (e.k === 'tb') {
-          var ax = e.alin === 'C' ? e.x + e.w / 2 : (e.alin === 'R' ? e.x + e.w : e.x), anc = e.alin === 'C' ? 'middle' : (e.alin === 'R' ? 'end' : 'start');
-          quebrar(e.txt, e.w, e.h, e.linhas).forEach(function (l, i) {
-            // a fonte da Zebra é mais estreita que a Arial: na prévia, aperta a linha que passaria da largura
-            var aperta = l.length * e.h * 0.55 > e.w ? ' textLength="' + e.w + '" lengthAdjust="spacingAndGlyphs"' : '';
-            var xx = aperta ? e.x : ax, an = aperta ? 'start' : anc;
-            p.push('<text x="' + xx + '" y="' + (e.y + i * (e.h + 2)) + '" font-size="' + e.h + '" text-anchor="' + an + '" dominant-baseline="hanging" ' + fonte + aperta + (e.inv ? ' fill="#fff"' : '') + '>' + esc(l) + '</text>');
-          });
-        } else if (e.k === 'c128' || e.k === 'ean') {
-          var im = imgCodigo(e.txt, e.k === 'ean' ? 'EAN13' : 'CODE128', e.mod, e.h);
-          var tr = e.rot === 'R' ? ' transform="translate(' + (e.x + im.h) + ',' + e.y + ') rotate(90)"' : ' x="' + e.x + '" y="' + e.y + '"';
-          p.push('<image href="' + im.url + '" width="' + im.w + '" height="' + im.h + '" preserveAspectRatio="none"' + tr + ' style="image-rendering:pixelated"/>');
-        }
-      });
-      var g = girar ? ' transform="translate(' + lay.h + ',0) rotate(90)"' : '';
-      return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (W / 8) + 'mm" height="' + (H / 8) + 'mm" viewBox="0 0 ' + W + ' ' + H + '">' +
-        '<rect width="' + W + '" height="' + H + '" fill="#fff"/><g' + g + '>' + p.join('') + '</g></svg>';
-    }
-    $('impPdf').onclick = function () {
-      if (!IMP.lay) { aviso('impMsg', 'Gere o par de etiquetas primeiro.', 'erro'); return; }
-      if (typeof JsBarcode === 'undefined') { aviso('impMsg', 'Biblioteca de código de barras não carregou.', 'erro'); return; }
-      var rolo100 = $('impRolo').value === '100';
-      var lw = rolo100 ? 100 : 50, lh = rolo100 ? 50 : 100;
-      // série é em pé (50x100): gira no rolo de 100; SKU é deitada (100x50): gira no rolo de 50 — igual ao ZPL
-      var paginas = [svgEtiqueta(IMP.lay.serie, rolo100), svgEtiqueta(IMP.lay.sku, !rolo100)];
-      var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Etiquetas</title><style>' +
-        '@page{size:' + lw + 'mm ' + lh + 'mm;margin:0} html,body{margin:0;padding:0}' +
-        '.pg{width:' + lw + 'mm;height:' + lh + 'mm;overflow:hidden;page-break-after:always;break-after:page} .pg:last-child{page-break-after:auto;break-after:auto} svg{display:block}' +
-        '</style></head><body>' + paginas.map(function (s) { return '<div class="pg">' + s + '</div>'; }).join('') +
-        '<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>';
-      var w = window.open('', '_blank');
-      if (!w) { aviso('impMsg', 'O navegador bloqueou a janela. Libere pop-ups para esta página.', 'erro'); return; }
-      w.document.open(); w.document.write(html); w.document.close();
-      escrever('impLog', 'Página ' + lw + 'x' + lh + ' mm aberta para impressão (rolo ' + $('impRolo').value + ' mm). Na janela de impressão: Margens = Nenhuma, Escala = 100%.');
-    };
-    $('impReg').onclick = function () { registrar('impressão', 'impLog'); };
-
-    login.iniciar();
-  </script>
+iniciar();
+</script>
 </body>
 </html>
