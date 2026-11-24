@@ -1,6 +1,6 @@
 /* sw.js — deixa o app abrir sem rede (quedas curtas). Não guarda nada do servidor (script.google.com). */
-var CACHE = 'producao-F2.0';
-var BASE = ['./', 'index.html', 'manifest.json', 'icone-192.png', 'icone-512.png'];
+var CACHE = 'producao-F3.0';
+var BASE = ['./', 'index.html', 'manifest.json', 'icone-192.png', 'icone-512.png', 'logo.png', 'fundo.jpg'];
 var ZXING = 'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js';
 
 self.addEventListener('install', function (e) {

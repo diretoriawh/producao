@@ -11,37 +11,33 @@
 <link rel="apple-touch-icon" href="icone-192.png">
 <title>Produção — Leitura</title>
 <style>
-  :root { --azul: #0b5394; --azul2: #1c7ed6; --verde: #2b8a3e; --vermelho: #c92a2a; --amarelo: #f59f00; --cinza: #f1f3f5; }
+  :root { --azul: #0b5394; --azul2: #1c7ed6; --verde: #2b8a3e; --vermelho: #c92a2a; --amarelo: #f59f00; --laranja: #e8590c; --cinza: #f1f3f5; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: #212529; }
   body { min-height: 100vh; background: #0b5394; overflow-x: hidden; }
-  /* fundo de água (provisório, só CSS) */
-  .agua { position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, #0b5394 0%, #1c7ed6 50%, #74c0fc 100%); overflow: hidden; }
-  .agua i { position: absolute; width: 250vmax; height: 250vmax; left: 50%; margin-left: -125vmax; top: 78vh; border-radius: 43%;
-    background: rgba(255,255,255,.13); animation: onda 18s linear infinite; }
-  .agua i:nth-child(2) { top: 82vh; border-radius: 40%; background: rgba(255,255,255,.10); animation-duration: 26s; animation-direction: reverse; }
-  .agua i:nth-child(3) { top: 87vh; border-radius: 45%; background: rgba(255,255,255,.08); animation-duration: 34s; }
-  @keyframes onda { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .agua i { animation: none; } }
+  /* fundo de água com bolhas (imagem do plano de fases) */
+  .fundo { position: fixed; inset: 0; z-index: -1; background: #1c7ed6 url('fundo.jpg') center / cover no-repeat; }
+  .fundo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,83,148,.55) 0%, rgba(11,83,148,.25) 60%, rgba(11,83,148,.45) 100%); }
 
   .faixa-teste { background: var(--vermelho); color: #fff; text-align: center; font-weight: bold; padding: 6px; letter-spacing: 1px; }
-  .marca { text-align: center; padding: 18px 10px 4px; color: #fff; }
-  .marca .logo { display: inline-block; font-size: 28px; font-weight: bold; letter-spacing: 2px; padding: 8px 18px; border: 3px solid #fff; border-radius: 12px; }
-  .marca img { max-height: 70px; max-width: 80%; }
-  .topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,.30); color: #fff; }
-  .topo .quem { font-size: 15px; line-height: 1.25; min-width: 0; }
+  .marca { text-align: center; padding: 18px 10px 4px; }
+  .marca .logo { display: inline-block; background: #fff; border-radius: 16px; padding: 10px 18px; box-shadow: 0 4px 18px rgba(0,0,0,.25); }
+  .marca .logo img { display: block; height: 110px; width: auto; }
+  .topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,.35); color: #fff; }
+  .topo .quem { font-size: 15px; line-height: 1.25; min-width: 0; display: flex; align-items: center; gap: 10px; }
+  .topo .quem img { height: 46px; background: #fff; border-radius: 8px; padding: 3px; flex-shrink: 0; }
   .topo .quem b { font-size: 18px; }
-  .topo .acoes { display: flex; gap: 6px; flex-shrink: 0; }
+  .topo .acoes { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
   .chip { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 13px; font-weight: bold; background: rgba(255,255,255,.2); margin-top: 3px; }
   .chip.off { background: var(--amarelo); color: #000; }
   .cartao { background: #fff; border-radius: 12px; padding: 18px; margin: 14px auto; max-width: 620px; box-shadow: 0 4px 18px rgba(0,0,0,.2); }
   h2, h3 { margin: 0 0 12px 0; color: var(--azul); }
   label { display: block; font-weight: bold; margin: 10px 0 4px; }
-  input { width: 100%; font-size: 20px; padding: 12px; border: 2px solid #ced4da; border-radius: 8px; }
+  input, textarea { width: 100%; font-size: 20px; padding: 12px; border: 2px solid #ced4da; border-radius: 8px; font-family: inherit; }
   button { display: inline-block; font-size: 18px; font-weight: bold; padding: 14px 18px; border: 0; border-radius: 10px; background: var(--azul); color: #fff; cursor: pointer; }
   button:disabled { opacity: .45; cursor: default; }
   button.sec { background: #495057; } button.claro { background: #e7f5ff; color: var(--azul); }
-  button.perigo { background: var(--vermelho); } button.ok { background: var(--verde); }
+  button.perigo { background: var(--vermelho); } button.ok { background: var(--verde); } button.lar { background: var(--laranja); }
   button.peq { font-size: 14px; padding: 8px 12px; }
   .bloco { width: 100%; margin-top: 10px; }
   .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
@@ -52,7 +48,7 @@
   .oculto { display: none !important; }
   .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .linha > * { flex: 1; }
-  .rodape { text-align: center; color: rgba(255,255,255,.8); font-size: 12px; padding: 10px; }
+  .rodape { text-align: center; color: #fff; font-size: 12px; padding: 6px 12px; margin: 10px auto; width: fit-content; border-radius: 10px; background: rgba(11,83,148,.75); }
   .espera { position: fixed; inset: 0; background: rgba(255,255,255,.55); display: flex; align-items: center; justify-content: center; z-index: 90; font-size: 24px; font-weight: bold; color: var(--azul); }
 
   /* tela de leitura */
@@ -60,11 +56,13 @@
   .pedido { background: #fff; border-radius: 12px; padding: 14px; text-align: center; font-size: 26px; font-weight: bold; color: var(--azul); }
   .pedido small { display: block; font-size: 16px; color: #495057; font-weight: normal; margin-top: 4px; }
   .pedido.ean { background: #fff3bf; color: #7a4f00; }
+  .pedido.nc { background: var(--laranja); color: #fff; }
+  .pedido.nc small { color: #fff; }
   .camera { position: relative; margin-top: 10px; background: #000; border-radius: 12px; overflow: hidden; min-height: 120px; }
   .camera video { width: 100%; max-height: 46vh; display: block; object-fit: cover; }
   .camera .mira { position: absolute; left: 10%; right: 10%; top: 50%; height: 0; border-top: 3px solid rgba(255,80,80,.85); }
   .camera .camMsg { color: #fff; padding: 18px; text-align: center; }
-  .dica { min-height: 22px; text-align: center; color: #fff; font-weight: bold; margin-top: 6px; }
+  .dica { min-height: 22px; text-align: center; color: #fff; font-weight: bold; margin-top: 6px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
   .manual { background: #fff; border-radius: 12px; padding: 10px; margin-top: 10px; }
   .manual .linha > input { flex: 3; } .manual .linha > button { flex: 1; }
 
@@ -74,38 +72,80 @@
   .res .grande { font-size: 40px; font-weight: bold; }
   .res .det { font-size: 20px; margin-top: 6px; }
   .res .pend { display: inline-block; margin-top: 8px; background: var(--amarelo); color: #000; padding: 4px 10px; border-radius: 10px; font-size: 15px; font-weight: bold; }
-  .res .nc { margin-top: 12px; background: rgba(255,255,255,.25); color: #fff; }
-  .res .nctxt { font-size: 13px; opacity: .9; margin-top: 4px; }
+  .res .nc { margin-top: 12px; background: var(--laranja); color: #fff; font-size: 22px; padding: 16px 30px; border: 3px solid #fff; }
   .sobre { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; color: #fff; }
-  .sobre.vermelha { background: var(--vermelho); }
+  .sobre.vermelha { background: var(--vermelho); z-index: 75; }
   .sobre.travada { background: #343a40; }
+  .sobre.laranja { background: var(--laranja); justify-content: flex-start; overflow: auto; z-index: 62; }
   .sobre .grande { font-size: 44px; font-weight: bold; }
   .sobre .motivo { font-size: 26px; margin: 16px 0; max-width: 800px; }
   .sobre .lista { background: rgba(0,0,0,.2); border-radius: 10px; padding: 10px 14px; max-height: 45vh; overflow: auto; text-align: left; font-size: 18px; width: 100%; max-width: 760px; }
   .sobre button.ciente { font-size: 28px; padding: 20px 50px; background: #fff; color: var(--vermelho); margin-top: 16px; }
   .sobre.travada button { margin: 6px; }
+  /* tela laranja da NC */
+  .ncform { width: 100%; max-width: 760px; text-align: left; }
+  .ncform h1 { text-align: center; font-size: 34px; margin: 6px 0 10px; }
+  .ncform .serial { background: rgba(0,0,0,.18); border-radius: 10px; padding: 10px 14px; font-size: 24px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .ncform label { color: #fff; font-size: 18px; }
+  .ncform .tipos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+  .ncform .tipos button { background: #fff; color: var(--laranja); min-height: 60px; font-size: 17px; }
+  .ncform .tipos button.sel { background: #7a2e00; color: #fff; outline: 4px solid #fff; }
+  .ncform textarea { min-height: 80px; font-size: 18px; }
+  .ncform .foto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .ncform .foto img { max-height: 140px; border-radius: 8px; border: 3px solid #fff; }
+  .ncform .acoes { display: flex; gap: 10px; margin-top: 16px; }
+  .ncform .acoes button { flex: 1; font-size: 22px; padding: 18px; }
+  .ncform .registrar { background: #fff; color: var(--laranja); }
+  .ncform .msg { color: #7a2e00; background: #fff3bf; }
+  .sobre.laranja .grande { margin-top: 10vh; }
+  .sobre.laranja button.ciente { color: var(--laranja); }
+  /* sino e painel de NCs */
+  .sino { position: relative; background: #fff; color: var(--azul); }
+  .sino .num { display: inline-block; min-width: 24px; padding: 1px 6px; border-radius: 12px; background: #868e96; color: #fff; margin-left: 4px; }
+  .sino.tem .num { background: var(--laranja); }
+  .sino.alerta { animation: pisca 1s ease-in-out infinite; }
+  .sino.alerta .num { background: var(--vermelho); }
+  @keyframes pisca { 50% { background: #ffd8a8; } }
+  .ncpainel { position: fixed; inset: 0; z-index: 64; background: rgba(11,83,148,.96); overflow: auto; padding: 12px; color: #212529; }
+  .ncpainel .barra { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: #fff; max-width: 900px; margin: 0 auto 10px; }
+  .ncpainel .barra h2 { color: #fff; margin: 0; }
+  .ncpainel .corpo { max-width: 900px; margin: 0 auto; }
+  .cnc { background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; border-left: 10px solid var(--laranja); }
+  .cnc.venc { border-left-color: var(--vermelho); }
+  .cnc .t { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 20px; font-weight: bold; }
+  .cnc .d { margin: 6px 0; font-size: 16px; }
+  .cnc .hist { font-size: 14px; color: #495057; }
+  .cnc .bts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .cnc .bts button { flex: 1; min-width: 120px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 13px; font-weight: bold; background: #e9ecef; }
+  .tag.verm { background: #ffe3e3; color: var(--vermelho); } .tag.lar { background: #ffe8cc; color: #a33b00; }
+  .alertas { background: #fff3bf; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; color: #7a4f00; font-weight: bold; }
+  .alertas div { margin: 4px 0; }
   .modal-fundo { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-start; justify-content: center; z-index: 70; overflow: auto; padding: 20px 10px; }
   .modal { background: #fff; border-radius: 12px; padding: 18px; width: 100%; max-width: 620px; }
+  .modal img.foto { width: 100%; border-radius: 8px; }
   table { border-collapse: collapse; width: 100%; font-size: 16px; }
-  td { border-bottom: 1px solid #dee2e6; padding: 6px 8px; text-align: left; }
+  td { border-bottom: 1px solid #dee2e6; padding: 6px 8px; text-align: left; vertical-align: top; }
   ol.ajuda li { margin-bottom: 6px; }
 </style>
 </head>
 <body>
-<div class="agua"><i></i><i></i><i></i></div>
+<div class="fundo"></div>
 <div id="faixaTeste" class="faixa-teste oculto">BASE DE TESTE ATIVA</div>
 
 <!-- LOGIN -->
 <div id="telaLogin">
-  <div class="marca"><span class="logo" id="logo">PRODUÇÃO</span></div>
+  <div class="marca"><span class="logo"><img src="logo.png" alt="Loja do Bebedouro · Blue Eletro Refrigerados"></span></div>
   <div id="raiz"></div>
 </div>
 
 <!-- LEITURA -->
 <div id="telaLeitura" class="oculto">
   <div class="topo">
-    <div class="quem"><b id="tNome"></b><br><span id="tEst"></span><br><span class="chip" id="tRede">online</span></div>
+    <div class="quem"><img src="logo.png" alt=""><div><b id="tNome"></b><br><span id="tEst"></span><br><span class="chip" id="tRede">online</span></div></div>
     <div class="acoes">
+      <button class="sino peq oculto" id="btSino">🔔 NCs<span class="num" id="sinoNum">0</span></button>
+      <button class="lar peq" id="btNovaNC">Registrar NC</button>
       <button class="claro peq" id="btConsulta">Consultar</button>
       <button class="claro peq" id="btAjuda2">Ajuda</button>
       <button class="perigo peq" id="btSair">Sair</button>
@@ -127,10 +167,20 @@
       </div>
       <div class="linha" style="margin-top:8px">
         <button class="sec peq oculto" id="btCancelarEan">Cancelar esta peça</button>
+        <button class="sec peq oculto" id="btCancelarNC">Cancelar NC</button>
         <button class="claro peq" id="btCamera">Reabrir câmera</button>
       </div>
     </div>
   </div>
+</div>
+
+<!-- TELA LARANJA (NC) -->
+<div id="laranja" class="sobre laranja oculto"><div class="ncform" id="lrCorpo"></div></div>
+
+<!-- PAINEL DE NCs (Qualidade, substituto, Encarregado) -->
+<div id="ncPainel" class="ncpainel oculto">
+  <div class="barra"><h2>Não conformidades</h2><div class="linha" style="flex:0 0 auto"><button class="claro peq" id="ncAtualizar">Atualizar</button><button class="peq" id="ncVoltar">Voltar à leitura</button></div></div>
+  <div class="corpo"><div id="ncMsg"></div><div id="ncAlertas"></div><div id="ncLista"></div></div>
 </div>
 
 <!-- TELA VERMELHA -->
@@ -158,11 +208,14 @@
 
 <script>
 /* ================= Configuração ================= */
-var APP_VERSAO = 'F2.0';
+var APP_VERSAO = 'F3.0';
 var API_URL = window.API_URL_TESTE || 'https://script.google.com/macros/s/AKfycbxtCUkW9stMLHfC0YNUgiUlIqXwDj7EDF2pVmybjoVL_1Pf_EedSIcI6U9NPuBYUBc/exec';
 var TIMEOUT_MS = 9000;          // sem resposta nesse tempo = sem rede (o reenvio usa o mesmo ID: não duplica)
+var TIMEOUT_NC_MS = 30000;      // NC com foto: o servidor grava no Drive (mais lento)
 var SINC_MS = 5 * 60 * 1000;    // sincroniza lista de travadas a cada 5 min
 var FILA_MS = 15000;            // tenta enviar a fila a cada 15 s
+var SINO_MS = 60000;            // sino de NCs a cada 1 min
+var FOTO_PX = 1280, FOTO_Q = 0.7;
 var RE_SERIAL = /^\d{6}[PT]\d{3}$/, RE_EAN13 = /^\d{13}$/;
 
 /* ================= Armazenamento local ================= */
@@ -183,10 +236,9 @@ function erroDe(m) {
   if (/^SESSAO_TROCA/.test(m)) e.troca = true; else if (/^SESSAO/.test(m)) e.sessao = true;
   return e;
 }
-function chamar(fn) {
-  var args = Array.prototype.slice.call(arguments, 1);
+function chamarCom(ms, fn, args) {
   var ctl = window.AbortController ? new AbortController() : null;
-  var tm = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+  var tm = setTimeout(function () { if (ctl) ctl.abort(); }, ms);
   return fetch(API_URL, {
     method: 'POST', redirect: 'follow', signal: ctl ? ctl.signal : undefined,
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -202,11 +254,13 @@ function chamar(fn) {
       return d.r;
     }, function (e) { clearTimeout(tm); throw e; });
 }
+function chamar(fn) { return chamarCom(TIMEOUT_MS, fn, Array.prototype.slice.call(arguments, 1)); }
 
 /* ================= Utilidades ================= */
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function mostrar(id, sim) { $(id).classList.toggle('oculto', sim === false); }
+function visivel(id) { return !$(id).classList.contains('oculto'); }
 function aviso(id, texto, tipo) { var e = $(id); if (!e) return; e.innerHTML = texto ? '<div class="msg ' + (tipo || 'info') + '">' + esc(texto).replace(/\n/g, '<br>') + '</div>' : ''; }
 var _esp = 0;
 function espera(on) {
@@ -240,10 +294,14 @@ document.addEventListener('click', somIniciar, { passive: true });
 /* ================= Estado local: contato, sincronização, fila ================= */
 function contato() { lsSet('ultimoContato', String(Date.now())); lsDel('destraveAte'); atualizarRede(); }
 function ultimoContato() { return Number(lsGet('ultimoContato') || 0); }
-// Fila ÚNICA do tablet: cada item leva a credencial (assinada pelo servidor) de quem leu.
+// Fila ÚNICA do tablet (leituras e NCs): cada item leva a credencial (assinada pelo servidor) de quem fez.
 // É enviada assim que a rede volta, com qualquer pessoa logada ou mesmo na tela de login.
 function lerFila() { return lsJson('fila', []); }
 function gravarFila(f) { lsPut('fila', f); atualizarRede(); }
+/** Grava a fila conferindo se coube no aparelho (NC com foto ocupa espaço). Devolve true/false. */
+function gravarFilaSeguro(f) {
+  try { if (!LS) return false; LS.setItem('fila', JSON.stringify(f)); atualizarRede(); return true; } catch (e) { return false; }
+}
 function sincLocal() { return APP.sinc || lsJson('sinc', null); }
 
 /** Lista de peças a fazer na estação (para conferir sem rede): {h, sku: {serial: SKU}}. */
@@ -265,6 +323,13 @@ function guardarLista(est, l) {
   lsPut('lista_' + est, l);
   _lista[est] = { h: l.h, sku: montarMapa(l) };
 }
+/** Peças travadas por NC feita neste tablet e ainda não confirmada pelo servidor. */
+function travadasLocais() {
+  var t = lsJson('travLocal', {}), f = lerFila(), out = {};
+  Object.keys(t).forEach(function (s) { if (f.some(function (x) { return x.tipo === 'nc' && x.serial === s; }) || Date.now() - t[s] < 6 * 60000) out[s] = t[s]; });
+  return out;
+}
+function travarLocal(serial) { var t = lsJson('travLocal', {}); t[serial] = Date.now(); lsPut('travLocal', t); }
 
 function travado() {
   var s = sincLocal(), h = s && s.travaH ? s.travaH : 2;
@@ -289,7 +354,9 @@ function sincronizar() {
     if (dest.length && r.destravesRegistrados >= dest.length) lsDel('destraves');
     guardarLista(r.estacao, r.lista); delete r.lista;
     APP.sinc = r; lsPut('sinc', r);
-    if (LEIT.etapa === 'serial' && APP.usuario) pedirSerial();
+    lsPut('travLocal', travadasLocais());
+    if (LEIT.etapa === 'serial' && !LEIT.nc && APP.usuario) pedirSerial();
+    ajustarSino();
     atualizarRede();
     return r;
   }).catch(function (e) { if (e.sessao) sessaoCaiu(e); atualizarRede(); });
@@ -303,12 +370,20 @@ function enviarFila() {
     (function prox() {
       var item = lerFila()[0];
       if (!item) { _enviandoFila = false; atualizarRede(); return fim(); }
-      var dados = { idLeitura: item.idLeitura, serial: item.serial, ean: item.ean, origem: item.origem, horaTablet: item.horaTablet, offline: true };
-      chamar('registrarLeituraFila', item.cred, dados).then(function (r) {
-        gravarFila(lerFila().filter(function (x) { return x.idLeitura !== item.idLeitura; }));
+      var envio;
+      if (item.tipo === 'nc') {
+        envio = chamarCom(TIMEOUT_NC_MS, 'registrarNCFila', [item.cred, { idNC: item.idNC, serial: item.serial, tipo: item.tipoNC, descricao: item.descricao,
+          foto: item.foto || '', idLeitura: item.idLeitura || '', horaTablet: item.horaTablet }]);
+      } else {
+        var dados = { idLeitura: item.idLeitura, serial: item.serial, ean: item.ean, origem: item.origem, horaTablet: item.horaTablet, offline: true };
+        envio = chamar('registrarLeituraFila', item.cred, dados);
+      }
+      envio.then(function (r) {
+        var chave = item.tipo === 'nc' ? item.idNC : item.idLeitura;
+        gravarFila(lerFila().filter(function (x) { return (x.tipo === 'nc' ? x.idNC : x.idLeitura) !== chave; }));
         if (!r.ok) {
           var rec = lsJson('recusadas', []);
-          rec.push({ serial: item.serial, msg: r.msg, quando: item.horaTablet, quem: item.usuarioNome, est: item.estacaoNome });
+          rec.push({ serial: item.serial, msg: (item.tipo === 'nc' ? 'NC NÃO registrada — ' : '') + r.msg, quando: item.horaTablet, quem: item.usuarioNome, est: item.estacaoNome });
           lsPut('recusadas', rec);
           mostrarRecusadas();
         }
@@ -321,6 +396,7 @@ function enviarFila() {
 }
 setInterval(function () { if (lerFila().length) enviarFila(); atualizarRede(); if (!APP.usuario && LOG.semRede && _esp === 0) carregarLogin(); }, FILA_MS);
 setInterval(function () { if (APP.usuario) sincronizar(); }, SINC_MS);
+setInterval(function () { atualizarSino(); }, SINO_MS);
 window.addEventListener('online', function () { enviarFila().then(sincronizar); atualizarRede(); if (!APP.usuario && LOG.semRede) carregarLogin(); });
 window.addEventListener('offline', atualizarRede);
 
@@ -329,7 +405,7 @@ var LOG = { estacao: '', modo: 'operador', uid: '', nome: '', dados: null };
 function tela(html) { $('raiz').innerHTML = '<div class="cartao">' + html + '</div>'; }
 function pendentesOutros() {
   var f = lerFila();
-  return f.length ? [f.length + ' leitura(s) feitas sem rede aguardando envio (vão sozinhas)'] : [];
+  return f.length ? [f.length + ' registro(s) feitos sem rede aguardando envio (vão sozinhos)'] : [];
 }
 
 function iniciar() {
@@ -434,7 +510,7 @@ function telaTroca(voluntaria) {
 function sessaoCaiu(e) {
   // a fila do tablet continua guardada e vai sozinha quando houver rede
   pararCamera();
-  APP.token = null; APP.usuario = null; lsDel('token_app'); lsDel('usuario_app');
+  APP.token = null; APP.usuario = null; APP.sinc = null; lsDel('token_app'); lsDel('usuario_app');
   esconderSobres();
   LOG.msg = (e && e.message ? e.message.replace(/^SESSAO:\s*/, '') : 'Sessão encerrada.') + ' Entre de novo.';
   carregarLogin();
@@ -443,7 +519,7 @@ function sessaoCaiu(e) {
 function sairDeVez() {
   var tk = APP.token;
   pararCamera();
-  APP.token = null; APP.usuario = null; lsDel('token_app'); lsDel('usuario_app');
+  APP.token = null; APP.usuario = null; APP.sinc = null; lsDel('token_app'); lsDel('usuario_app'); lsDel('sinc');
   if (tk) chamar('sair', tk).catch(function () {});
   esconderSobres();
   carregarLogin();
@@ -452,7 +528,7 @@ function sairDeVez() {
 $('btSair').onclick = function () { sairDeVez(); }; // a fila fica no tablet e vai sozinha quando a rede voltar
 
 /* ================= Tela de leitura ================= */
-var LEIT = { etapa: 'serial', serial: '', origem: 'CAMERA', ocupado: false, ultimo: '', ultimoT: 0, ignorar: {}, modoConsulta: false };
+var LEIT = { etapa: 'serial', serial: '', origem: 'CAMERA', ocupado: false, ultimo: '', ultimoT: 0, ignorar: {}, modoConsulta: false, nc: null };
 
 function leEan() { var s = sincLocal(); return !!(s && s.leEan && s.estacao === APP.usuario.estacao); }
 
@@ -462,19 +538,22 @@ function abrirLeitura() {
   $('tNome').textContent = APP.usuario.nome;
   $('tEst').textContent = APP.usuario.estacaoNome + (APP.usuario.modo === 'gestor' ? ' · ' + APP.usuario.perfilNome : '');
   $('resultado').innerHTML = '';
+  LEIT.nc = null;
   pedirSerial();
+  ajustarSino();
   atualizarRede();
   abrirCamera();
   manterTelaLigada();
-  sincronizar().then(function () { pedirSerial(); return enviarFila(); });
+  sincronizar().then(function () { pedirSerial(); atualizarSino(); return enviarFila(); });
   mostrarRecusadas();
 }
 
 function pedirSerial() {
+  if (LEIT.nc) return pedirSerialNC();
   LEIT.etapa = 'serial'; LEIT.serial = '';
   $('pedido').className = 'pedido';
   $('pedido').innerHTML = 'Leia o SERIAL' + (leEan() ? '<small>depois o EAN da etiqueta de SKU</small>' : '');
-  mostrar('btCancelarEan', false);
+  mostrar('btCancelarEan', false); mostrar('btCancelarNC', false);
   $('manual').placeholder = 'Digitar serial (se a etiqueta não ler)';
 }
 function pedirEan(serial) {
@@ -494,7 +573,7 @@ $('btCamera').onclick = function () { abrirCamera(); };
 /** Entrada única de códigos (câmera ou digitado). */
 function aoLer(txt, origem) {
   txt = normal(txt);
-  if (!txt || LEIT.ocupado || !$('vermelha').classList.contains('oculto') || !$('travada').classList.contains('oculto')) return;
+  if (!txt || LEIT.ocupado || visivel('vermelha') || visivel('travada') || visivel('laranja') || visivel('ncPainel') || $('modal').innerHTML) return;
   var agora = Date.now();
   if (origem !== 'MANUAL') {
     if (txt === LEIT.ultimo && agora - LEIT.ultimoT < 2500) return;     // mesma etiqueta parada na frente
@@ -502,6 +581,10 @@ function aoLer(txt, origem) {
   }
   LEIT.ultimo = txt; LEIT.ultimoT = agora;
   if (LEIT.modoConsulta) { LEIT.modoConsulta = false; return consultar(txt); }
+  if (LEIT.nc) { // registrar NC: leitura do serial da peça
+    if (RE_SERIAL.test(txt)) return abrirFormNC(txt, '');
+    return dica(RE_EAN13.test(txt) ? 'Isso é um EAN. Leia o SERIAL da peça com problema.' : 'Código não reconhecido: ' + txt);
+  }
   if (LEIT.etapa === 'serial') {
     if (RE_SERIAL.test(txt)) {
       LEIT.origem = origem;
@@ -529,7 +612,7 @@ function enviar(p) {
   var envio = (navigator.onLine === false) ? Promise.reject(Object.assign(new Error('offline'), { rede: true })) : chamar('registrarLeitura', APP.token, item);
   envio.then(function (r) {
     LEIT.ocupado = false;
-    if (r.ok) { guardarHistorico(item.serial); telaVerde(r.serial, r.sku, Date.now() - t0, false); }
+    if (r.ok) { guardarHistorico(item.serial); telaVerde(r.serial, r.sku, Date.now() - t0, false, item.idLeitura); }
     else telaVermelha(p.serial + ' — ' + r.msg);
   }).catch(function (e) {
     LEIT.ocupado = false;
@@ -545,6 +628,7 @@ function leituraSemRede(item) {
   var s = sincLocal() || {}, est = APP.usuario.estacao, l = listaEstacao(est), sr = item.serial, sku = '';
   var verm = function (m) { telaVermelha(sr + ' — ' + m + ' (sem rede)'); };
   if (s.travadas && s.travadas[sr]) return verm(s.travadas[sr]);
+  if (travadasLocais()[sr]) return verm('Peça com NC registrada neste tablet. Aguarde a liberação da Qualidade.');
   if (jaLidaAqui(sr)) return verm('Peça já registrada nesta operação (neste tablet).');
   var skuEan = item.ean && s.eans ? s.eans[item.ean] : '';
   if (item.ean && s.eans && !skuEan) return verm('EAN não cadastrado: ' + item.ean + '.');
@@ -560,26 +644,28 @@ function leituraSemRede(item) {
   item.offline = true; item.cred = cred; item.estacao = est; item.estacaoNome = APP.usuario.estacaoNome; item.usuarioNome = APP.usuario.nome;
   var f = lerFila(); f.push(item); gravarFila(f);
   guardarHistorico(sr);
-  telaVerde(sr, sku || skuEan || '', 0, true);
+  telaVerde(sr, sku || skuEan || '', 0, true, item.idLeitura);
 }
 
 function chaveHist() { return 'hist_' + (APP.usuario ? APP.usuario.estacao : ''); }
 function guardarHistorico(serial) {
   var h = lsJson(chaveHist(), []); h.push([serial, Date.now()]); if (h.length > 400) h = h.slice(-400); lsPut(chaveHist(), h);
 }
+function tirarDoHistorico(serial) { lsPut(chaveHist(), lsJson(chaveHist(), []).filter(function (x) { return x[0] !== serial; })); }
 function jaLidaAqui(serial) {
-  if (lerFila().some(function (x) { return x.serial === serial && x.estacao === APP.usuario.estacao; })) return true;
+  if (lerFila().some(function (x) { return x.tipo !== 'nc' && x.serial === serial && x.estacao === APP.usuario.estacao; })) return true;
   return lsJson(chaveHist(), []).some(function (x) { return x[0] === serial; });
 }
 
-function telaVerde(serial, sku, ms, pendente) {
+function telaVerde(serial, sku, ms, pendente, idLeitura) {
   sinalOk();
   LEIT.ignorar[serial] = Date.now();
   if (LEIT.serial) LEIT.ignorar[normal(LEIT.serial)] = Date.now();
   $('resultado').innerHTML = '<div class="res verde"><div class="grande">✔ REGISTRADO</div>' +
     '<div class="det">' + esc(serial) + (sku ? ' · ' + esc(sku) : '') + ' · ' + esc(APP.usuario.estacaoNome) + (ms ? ' · ' + msTxt(ms) : '') + '</div>' +
     (pendente ? '<div class="pend">⏳ pendente — sem rede, envia sozinho</div>' : '') +
-    '<div><button class="nc" disabled>Não conforme</button><div class="nctxt">disponível na Fase 3</div></div></div>';
+    '<div><button class="nc" id="btNaoConforme">✖ NÃO CONFORME</button></div></div>';
+  $('btNaoConforme').onclick = function () { abrirFormNC(serial, idLeitura); };
   pedirSerial();
 }
 
@@ -600,18 +686,241 @@ function telaVermelha(motivo, lista) {
 
 function mostrarRecusadas() {
   var rec = lsJson('recusadas', []);
-  if (!APP.usuario || !rec.length || !$('vermelha').classList.contains('oculto') || LEIT.ocupado || $('telaLeitura').classList.contains('oculto')) return;
-  telaVermelha(rec.length + ' leitura(s) feita(s) sem rede foram RECUSADAS pelo servidor:',
+  if (!APP.usuario || !rec.length || visivel('vermelha') || LEIT.ocupado || !visivel('telaLeitura')) return;
+  telaVermelha(rec.length + ' registro(s) feito(s) sem rede foram RECUSADOS pelo servidor:',
     rec.map(function (r) { return '<div><b>' + esc(r.serial) + '</b> (' + esc(horaTxt(r.quando)) + (r.quem ? ', ' + esc(r.quem) : '') + (r.est ? ', ' + esc(r.est) : '') + '): ' + esc(r.msg) + '</div>'; }).join(''));
 }
 
-function esconderSobres() { mostrar('vermelha', false); mostrar('travada', false); $('modal').innerHTML = ''; }
+function esconderSobres() { ['vermelha', 'travada', 'laranja', 'ncPainel'].forEach(function (i) { mostrar(i, false); }); $('modal').innerHTML = ''; LEIT.nc = null; }
+
+/* ================= NÃO CONFORMIDADE (tela laranja) ================= */
+var NCF = null; // formulário aberto: {serial, idLeitura, tipo, descricao, foto}
+$('btNovaNC').onclick = function () {
+  if (LEIT.ocupado) return;
+  LEIT.nc = { etapa: 'serial' }; $('resultado').innerHTML = '';
+  pedirSerialNC();
+};
+$('btCancelarNC').onclick = function () { LEIT.nc = null; pedirSerial(); };
+function pedirSerialNC() {
+  LEIT.etapa = 'serial';
+  $('pedido').className = 'pedido nc';
+  $('pedido').innerHTML = 'NÃO CONFORMIDADE — leia o SERIAL da peça<small>ou digite abaixo</small>';
+  mostrar('btCancelarEan', false); mostrar('btCancelarNC', true);
+  $('manual').placeholder = 'Digitar serial da peça com problema';
+}
+
+function abrirFormNC(serial, idLeitura) {
+  var s = sincLocal() || {};
+  var tipos = (s.nc && s.nc.tipos) || [];
+  NCF = { serial: serial, idLeitura: idLeitura || '', tipo: '', descricao: '', foto: '' };
+  LEIT.nc = null; pedirSerial(); $('resultado').innerHTML = '';
+  $('lrCorpo').innerHTML = '<h1>⚠ NÃO CONFORMIDADE</h1>' +
+    '<div class="serial"><span>Serial <span id="ncSerial">' + esc(serial) + '</span></span>' + (idLeitura ? '<span class="tag lar">desfaz o registro desta operação</span>' : '<button class="peq claro" id="ncTroca">Trocar peça</button>') + '</div>' +
+    '<label>Motivo</label>' + (tipos.length ? '<div class="tipos">' + tipos.map(function (t) { return '<button data-t="' + esc(t.codigo) + '">' + esc(t.descricao) + '</button>'; }).join('') + '</div>'
+      : '<div class="msg">Nenhum tipo de NC cadastrado (painel → Tipos de NC). Aguarde a sincronização.</div>') +
+    '<label>Descrição curta (o que foi identificado e onde)</label><textarea id="ncDesc" maxlength="300"></textarea>' +
+    '<label>Foto (se possível)</label><div class="foto"><button class="peq claro" id="ncFotoBt">📷 Tirar foto</button><input type="file" id="ncFoto" accept="image/*" capture="environment" class="oculto"><span id="ncFotoInfo"></span></div>' +
+    '<div id="ncMsgF"></div>' +
+    '<div class="acoes"><button class="registrar" id="ncOk">REGISTRAR NC</button><button class="sec" id="ncCanc">Cancelar</button></div>';
+  mostrar('laranja', true);
+  $('lrCorpo').querySelectorAll('[data-t]').forEach(function (b) {
+    b.onclick = function () { NCF.tipo = b.getAttribute('data-t'); $('lrCorpo').querySelectorAll('[data-t]').forEach(function (x) { x.classList.toggle('sel', x === b); }); };
+  });
+  if ($('ncTroca')) $('ncTroca').onclick = function () { mostrar('laranja', false); NCF = null; LEIT.nc = { etapa: 'serial' }; pedirSerialNC(); };
+  $('ncFotoBt').onclick = function () { $('ncFoto').click(); };
+  $('ncFoto').onchange = function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    $('ncFotoInfo').textContent = 'Reduzindo…';
+    reduzirFoto(f, FOTO_PX, FOTO_Q).then(function (url) {
+      NCF.foto = url;
+      $('ncFotoInfo').innerHTML = '<img src="' + url + '" alt="foto"> ' + Math.round(url.length * 0.75 / 1024) + ' KB <button class="peq sec" id="ncFotoTira">Tirar</button>';
+      $('ncFotoTira').onclick = function () { NCF.foto = ''; $('ncFotoInfo').textContent = ''; $('ncFoto').value = ''; };
+    }).catch(function () { $('ncFotoInfo').textContent = 'Não foi possível ler a foto.'; });
+  };
+  $('ncCanc').onclick = function () { mostrar('laranja', false); NCF = null; pedirSerial(); };
+  $('ncOk').onclick = function () {
+    NCF.descricao = $('ncDesc').value.trim();
+    if (!NCF.tipo) return aviso('ncMsgF', 'Escolha o motivo.', 'erro');
+    if (NCF.descricao.length < 3) return aviso('ncMsgF', 'Escreva a descrição.', 'erro');
+    enviarNC();
+  };
+}
+
+/** Reduz a foto no tablet (lado maior ≤ px, JPEG). */
+function reduzirFoto(arq, px, q) {
+  return new Promise(function (ok, falha) {
+    var url = URL.createObjectURL(arq), img = new Image();
+    img.onload = function () {
+      var k = Math.min(1, px / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); falha(new Error('foto')); };
+    img.src = url;
+  });
+}
+function reduzirDataUrl(url, px, q) {
+  return new Promise(function (ok) {
+    var img = new Image();
+    img.onload = function () {
+      var k = Math.min(1, px / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = function () { ok(''); };
+    img.src = url;
+  });
+}
+
+function enviarNC() {
+  var d = { idNC: 'N' + uuid().slice(1), serial: NCF.serial, tipo: NCF.tipo, descricao: NCF.descricao, foto: NCF.foto, idLeitura: NCF.idLeitura, horaTablet: Date.now() };
+  espera(true);
+  var envio = (navigator.onLine === false) ? Promise.reject(Object.assign(new Error('offline'), { rede: true })) : chamarCom(TIMEOUT_NC_MS, 'registrarNC', [APP.token, d]);
+  envio.then(function (r) {
+    espera(false);
+    if (!r.ok) { mostrar('laranja', false); NCF = null; return telaVermelha(d.serial + ' — NC NÃO registrada: ' + r.msg); }
+    ncRegistrada(d, false, r.aviso);
+  }).catch(function (e) {
+    espera(false);
+    if (e.sessao) { mostrar('laranja', false); return sessaoCaiu(e); }
+    if (!e.rede) return aviso('ncMsgF', e.message, 'erro');
+    ncSemRede(d);
+  });
+}
+
+/** Sem rede: a NC (com foto) vai para a fila do tablet; o operador separa a peça. */
+function ncSemRede(d) {
+  var s = sincLocal() || {}, est = APP.usuario.estacao, cred = s.cred;
+  if (s.travadas && /cancelada|reprovada/.test(s.travadas[d.serial] || '')) { mostrar('laranja', false); return telaVermelha(d.serial + ' — ' + s.travadas[d.serial] + ' (sem rede)'); }
+  if (!cred || cred.uid !== APP.usuario.id || cred.est !== est || Number(cred.ate) < Date.now()) {
+    return aviso('ncMsgF', 'Sem rede e este tablet ainda não tem a autorização de quem está logado. Separe a peça e registre a NC quando a rede voltar.', 'erro');
+  }
+  var item = { tipo: 'nc', idNC: d.idNC, serial: d.serial, tipoNC: d.tipo, descricao: d.descricao, foto: d.foto, idLeitura: d.idLeitura, horaTablet: d.horaTablet,
+    cred: cred, estacao: est, estacaoNome: APP.usuario.estacaoNome, usuarioNome: APP.usuario.nome };
+  var f = lerFila(); f.push(item);
+  if (gravarFilaSeguro(f)) return ncRegistrada(d, true, '');
+  // sem espaço no aparelho: tenta a foto menor, depois sem foto
+  reduzirDataUrl(d.foto, 640, 0.5).then(function (menor) {
+    item.foto = menor; f[f.length - 1] = item;
+    if (menor && gravarFilaSeguro(f)) return ncRegistrada(d, true, 'Foto guardada em tamanho menor (pouco espaço no tablet).');
+    item.foto = ''; f[f.length - 1] = item;
+    if (gravarFilaSeguro(f)) return ncRegistrada(d, true, 'Sem espaço para a foto: NC guardada SEM foto.');
+    aviso('ncMsgF', 'Sem espaço no tablet para guardar a NC. Separe a peça e registre quando a rede voltar.', 'erro');
+  });
+}
+
+function ncRegistrada(d, pendente, avisoTxt) {
+  travarLocal(d.serial);
+  if (d.idLeitura) tirarDoHistorico(d.serial);
+  LEIT.ignorar[d.serial] = Date.now();
+  NCF = null;
+  sinalErro();
+  $('lrCorpo').innerHTML = '<div class="grande">NC REGISTRADA</div><div class="motivo">' + esc(d.serial) + '<br><b>SEPARE A PEÇA</b>' +
+    (d.idLeitura ? '<br>O registro desta operação foi desfeito.' : '') + '</div>' +
+    (pendente ? '<div class="msg alerta">⏳ Sem rede: a NC está guardada no tablet e vai sozinha quando a rede voltar.</div>' : '') +
+    (avisoTxt ? '<div class="msg alerta">' + esc(avisoTxt) + '</div>' : '') +
+    '<button class="ciente" id="ncCiente">OK</button>';
+  $('ncCiente').onclick = function () { mostrar('laranja', false); pedirSerial(); atualizarSino(); };
+  atualizarRede();
+}
+
+/* ================= Sino e aba NCs ================= */
+var SINO = { ultimo: null };
+function ajustarSino() {
+  var s = sincLocal();
+  var tem = !!(APP.usuario && s && s.nc && s.nc.sino && s.estacao === APP.usuario.estacao);
+  mostrar('btSino', tem);
+  return tem;
+}
+function atualizarSino() {
+  if (!APP.usuario || !ajustarSino() || document.hidden) return Promise.resolve();
+  return chamar('sinoNC', APP.token).then(function (r) {
+    SINO.ultimo = r;
+    var vista = Number(lsGet('sinoVisto') || 0), nova = r.ultima > vista;
+    $('sinoNum').textContent = r.n;
+    $('btSino').classList.toggle('tem', r.n > 0);
+    $('btSino').classList.toggle('alerta', r.alertas.length > 0 || nova);
+    if (nova && !visivel('ncPainel')) bip(700, 0.15, 2);
+    if (visivel('ncPainel')) desenharAlertas();
+  }).catch(function (e) { if (e.sessao) sessaoCaiu(e); });
+}
+$('btSino').onclick = function () { abrirPainelNC(); };
+$('ncVoltar').onclick = function () { mostrar('ncPainel', false); pedirSerial(); };
+$('ncAtualizar').onclick = function () { abrirPainelNC(); };
+
+var NCL = { lista: [], avaliar: false };
+function abrirPainelNC(msgOk) {
+  mostrar('ncPainel', true);
+  aviso('ncMsg', 'Carregando…', 'info');
+  if (SINO.ultimo) lsSet('sinoVisto', String(SINO.ultimo.ultima || 0));
+  $('btSino').classList.remove('alerta');
+  atualizarSino();
+  chamar('listarNCs', APP.token, {}).then(function (r) {
+    NCL.lista = r.abertas; NCL.avaliar = r.avaliar;
+    aviso('ncMsg', msgOk || (r.abertas.length ? '' : 'Nenhuma NC aberta.'), 'ok');
+    desenharAlertas(); desenharNCs();
+  }).catch(function (e) {
+    if (e.sessao) { mostrar('ncPainel', false); return sessaoCaiu(e); }
+    aviso('ncMsg', e.rede ? 'Sem rede: a lista de NCs precisa do servidor.' : e.message, 'erro');
+  });
+}
+function desenharAlertas() {
+  var a = SINO.ultimo ? SINO.ultimo.alertas : [];
+  $('ncAlertas').innerHTML = a.length ? '<div class="alertas">🔔 Alertas<br>' + a.map(function (x) { return '<div>• ' + esc(x.texto) + '</div>'; }).join('') + '</div>' : '';
+}
+function desenharNCs() {
+  $('ncLista').innerHTML = NCL.lista.map(function (n, i) {
+    var est = n.estado === 'MANTIDA' ? '<span class="tag lar">MANTIDA</span>' : '<span class="tag">ABERTA</span>';
+    return '<div class="cnc' + (n.vencida ? ' venc' : '') + '"><div class="t"><span>' + esc(n.serial) + ' · ' + esc(n.sku || '') + '</span><span>' + est +
+      (n.vencida ? ' <span class="tag verm">PRAZO VENCIDO</span>' : '') + '</span></div>' +
+      '<div class="d"><b>' + esc(n.tipoNome) + '</b> — ' + esc(n.descricao) + '</div>' +
+      '<div class="d">Estação: <b>' + esc(n.opNome) + '</b> · aberta ' + esc(n.aberturaTxt) + ' por ' + esc(n.abertoPor) + ' · prazo ' + esc(n.prazoTxt) +
+      (n.desfez ? ' · <i>registro da estação desfeito</i>' : '') + (n.offline ? ' · <i>sem rede</i>' : '') + '</div>' +
+      (n.aviso ? '<div class="msg alerta">' + esc(n.aviso) + '</div>' : '') +
+      (n.eventos.length > 1 ? '<div class="hist">' + n.eventos.slice(1).map(function (e) { return esc(e.quando) + ' ' + esc(e.evento) + ' (' + esc(e.usuario) + '): ' + esc(e.justificativa); }).join('<br>') + '</div>' : '') +
+      '<div class="bts">' + (n.temFoto ? '<button class="claro" data-foto="' + i + '">Ver foto</button>' : '') +
+      (NCL.avaliar ? '<button class="ok" data-av="LIBERAR" data-i="' + i + '">Liberar</button><button class="lar" data-av="MANTER" data-i="' + i + '">Manter</button><button class="perigo" data-av="REPROVAR" data-i="' + i + '">Reprovar</button>' : '') +
+      '</div></div>';
+  }).join('');
+  $('ncLista').querySelectorAll('[data-foto]').forEach(function (b) { b.onclick = function () { verFoto(NCL.lista[Number(b.getAttribute('data-foto'))]); }; });
+  $('ncLista').querySelectorAll('[data-av]').forEach(function (b) { b.onclick = function () { avaliar(NCL.lista[Number(b.getAttribute('data-i'))], b.getAttribute('data-av')); }; });
+}
+function verFoto(n) {
+  abrirModal('<h3>Foto — ' + esc(n.serial) + '</h3><div id="fMsg"><div class="msg info">Carregando…</div></div><button class="sec bloco" id="fFechar">Fechar</button>');
+  $('fFechar').onclick = fecharModal;
+  chamarCom(TIMEOUT_NC_MS, 'fotoNC', [APP.token, n.id]).then(function (url) { if ($('fMsg')) $('fMsg').innerHTML = '<img class="foto" src="' + url + '" alt="foto da NC">'; })
+    .catch(function (e) { aviso('fMsg', e.message, 'erro'); });
+}
+var ROT = { LIBERAR: 'Liberar', MANTER: 'Manter', REPROVAR: 'Reprovar' };
+var EXPL = { LIBERAR: 'O problema foi resolvido. A peça destrava e precisa ser lida de novo na estação da NC (' , MANTER: 'Vai tentar corrigir de novo. A peça continua travada; nova avaliação em até 10 horas úteis.', REPROVAR: 'A peça não tem conserto: serial, etiqueta e SKU são cancelados (REPROVADA). Não tem volta.' };
+function avaliar(n, dec) {
+  var idc = 'A' + uuid().slice(1);
+  abrirModal('<h3>' + ROT[dec] + ' — ' + esc(n.serial) + '</h3><p>' + esc(dec === 'LIBERAR' ? EXPL.LIBERAR + n.opNome + ').' : EXPL[dec]) + '</p>' +
+    '<label>Justificativa (obrigatória, mínimo 15 caracteres)</label><textarea id="avJust" maxlength="500" style="min-height:90px;font-size:18px"></textarea><div id="avMsg"></div>' +
+    '<div class="linha" style="margin-top:10px"><button class="' + (dec === 'LIBERAR' ? 'ok' : (dec === 'MANTER' ? 'lar' : 'perigo')) + '" id="avOk">' + ROT[dec] + '</button><button class="sec" id="avCanc">Voltar</button></div>');
+  $('avCanc').onclick = fecharModal;
+  $('avOk').onclick = function () {
+    var j = $('avJust').value.trim();
+    if (j.length < 15) return aviso('avMsg', 'Justificativa com pelo menos 15 caracteres (agora: ' + j.length + ').', 'erro');
+    $('avOk').disabled = true;
+    chamarCom(20000, 'avaliarNC', [APP.token, n.id, dec, j, idc]).then(function (r) {
+      fecharModal();
+      abrirPainelNC(n.serial + ': ' + (dec === 'LIBERAR' ? 'liberada' + (r.travada ? ' (ainda tem outra NC aberta)' : ' — ler de novo em ' + r.releer) : (dec === 'MANTER' ? 'mantida até ' + r.prazo : 'REPROVADA')) + '.');
+    }).catch(function (e) {
+      if ($('avOk')) $('avOk').disabled = false;
+      if (e.sessao) { fecharModal(); mostrar('ncPainel', false); return sessaoCaiu(e); }
+      aviso('avMsg', e.rede ? 'Sem rede: tente de novo (não grava em dobro).' : e.message, 'erro');
+    });
+  };
+}
 
 /* ---- trava e destrave ---- */
 function telaTravada() {
   sinalErro();
   var s = sincLocal() || {};
-  $('trMotivo').textContent = 'Mais de ' + (s.travaH || 2) + ' h sem falar com o servidor (último contato: ' + (ultimoContato() ? horaTxt(ultimoContato()) : 'nunca') + '). ' + lerFila().length + ' leitura(s) aguardando envio.';
+  $('trMotivo').textContent = 'Mais de ' + (s.travaH || 2) + ' h sem falar com o servidor (último contato: ' + (ultimoContato() ? horaTxt(ultimoContato()) : 'nunca') + '). ' + lerFila().length + ' registro(s) aguardando envio.';
   aviso('trMsg', '');
   mostrar('travada', true);
   pedirSerial();
@@ -659,14 +968,9 @@ function hashDestrave(senha, sal, iter) {
   });
 }
 
-/* ---- modal genérico, confirmação, consulta, ajuda ---- */
+/* ---- modal genérico, consulta, ajuda ---- */
 function abrirModal(html) { $('modal').innerHTML = '<div class="modal-fundo"><div class="modal">' + html + '</div></div>'; }
 function fecharModal() { $('modal').innerHTML = ''; }
-function confirmar(titulo, texto, rotulo, acao) {
-  abrirModal('<h3>' + esc(titulo) + '</h3><p>' + esc(texto) + '</p><div class="linha"><button class="perigo" id="cSim">' + esc(rotulo) + '</button><button class="sec" id="cNao">Voltar</button></div>');
-  $('cSim').onclick = function () { fecharModal(); acao(); };
-  $('cNao').onclick = fecharModal;
-}
 
 $('btConsulta').onclick = function () {
   abrirModal('<h3>Consultar serial</h3><div class="linha"><input id="qSerial" placeholder="Serial" autocomplete="off" style="flex:3"><button id="qOk">Consultar</button></div>' +
@@ -685,7 +989,8 @@ function consultar(serial) {
     $('qRes').innerHTML = '<table>' +
       '<tr><td>Serial</td><td><b>' + esc(r.serial) + '</b>' + (r.posicao ? ' (' + esc(r.posicao) + ')' : '') + '</td></tr>' +
       '<tr><td>SKU</td><td>' + esc(r.sku) + '</td></tr>' +
-      '<tr><td>Situação</td><td><b>' + esc(r.situacao) + '</b>' + (r.ncs ? ' · <span style="color:#c92a2a">' + r.ncs + ' NC aberta</span>' : '') + '</td></tr>' +
+      '<tr><td>Situação</td><td><b>' + esc(r.situacao) + '</b>' + (r.ncs ? ' · <span style="color:#c92a2a">' + r.ncs + ' NC aberta: ' +
+        (r.ncsAbertas || []).map(function (x) { return esc(x.operacaoNome) + ' ' + esc(x.aberturaTxt); }).join('; ') + '</span>' : '') + '</td></tr>' +
       '<tr><td>Próxima operação</td><td>' + esc(r.proxima || '—') + '</td></tr>' +
       '<tr><td>Registros</td><td>' + (r.feitas.length ? r.feitas.map(function (f) { return esc(f.op) + ' — ' + esc(f.quando); }).join('<br>') : 'nenhum') + '</td></tr></table>';
   }).catch(function (e) {
@@ -706,6 +1011,7 @@ function abrirAjuda() {
     '<li>No Safari, toque em Compartilhar → <b>Adicionar à Tela de Início</b>.</li>' +
     '<li>Ajustes → Acessibilidade → <b>Acesso Guiado</b> → ligar e definir código.</li>' +
     '<li>Abra o app e clique 3 vezes no botão lateral → Iniciar.</li></ol>' +
+    '<p><b>Não conformidade</b>: na tela verde, toque em NÃO CONFORME (desfaz o registro desta operação) ou use <b>Registrar NC</b> no topo. Sem rede, a NC fica guardada no tablet e vai sozinha; <b>separe a peça</b>.</p>' +
     '<p class="msg info">Deixe o tablet na tomada: a tela fica sempre ligada enquanto o app está aberto.</p>' +
     '<button class="sec bloco" id="aFechar">Fechar</button>');
   $('aFechar').onclick = fecharModal;
@@ -758,7 +1064,7 @@ function pararCamera() {
 }
 document.addEventListener('visibilitychange', function () {
   if (document.hidden) pararCamera();
-  else if (APP.usuario && !$('telaLeitura').classList.contains('oculto')) { abrirCamera(); manterTelaLigada(); enviarFila(); }
+  else if (APP.usuario && visivel('telaLeitura')) { abrirCamera(); manterTelaLigada(); enviarFila(); atualizarSino(); }
 });
 
 var WL = null;
