@@ -127,6 +127,15 @@
   table { border-collapse: collapse; width: 100%; font-size: 16px; }
   td { border-bottom: 1px solid #dee2e6; padding: 6px 8px; text-align: left; vertical-align: top; }
   ol.ajuda li { margin-bottom: 6px; }
+  /* Fase 4 */
+  .res .faixa { display: inline-block; margin-top: 8px; background: #7048e8; color: #fff; padding: 4px 12px; border-radius: 10px; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+  .res.astp { background: #0c8599; }
+  .res.astp .bts { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+  .res.astp .bts button { font-size: 22px; padding: 16px 28px; }
+  .res.astp .bts .okastp { background: #fff; color: #0c8599; }
+  .res.astp .bts .anular { background: #343a40; }
+  .res.anulada { background: #495057; }
+  select.lista { width: 100%; font-size: 17px; padding: 8px; border: 2px solid #ced4da; border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -146,6 +155,7 @@
     <div class="acoes">
       <button class="sino peq oculto" id="btSino">🔔 NCs<span class="num" id="sinoNum">0</span></button>
       <button class="lar peq" id="btNovaNC">Registrar NC</button>
+      <button class="claro peq oculto" id="btGestao">Gestão</button>
       <button class="claro peq" id="btConsulta">Consultar</button>
       <button class="claro peq" id="btAjuda2">Ajuda</button>
       <button class="perigo peq" id="btSair">Sair</button>
@@ -208,7 +218,7 @@
 
 <script>
 /* ================= Configuração ================= */
-var APP_VERSAO = 'F3.0';
+var APP_VERSAO = 'F4.0';
 var API_URL = window.API_URL_TESTE || 'https://script.google.com/macros/s/AKfycbxtCUkW9stMLHfC0YNUgiUlIqXwDj7EDF2pVmybjoVL_1Pf_EedSIcI6U9NPuBYUBc/exec';
 var TIMEOUT_MS = 9000;          // sem resposta nesse tempo = sem rede (o reenvio usa o mesmo ID: não duplica)
 var TIMEOUT_NC_MS = 30000;      // NC com foto: o servidor grava no Drive (mais lento)
@@ -356,12 +366,13 @@ function sincronizar() {
     APP.sinc = r; lsPut('sinc', r);
     lsPut('travLocal', travadasLocais());
     if (LEIT.etapa === 'serial' && !LEIT.nc && APP.usuario) pedirSerial();
-    ajustarSino();
+    ajustarSino(); ajustarGestao();
     atualizarRede();
     return r;
   }).catch(function (e) { if (e.sessao) sessaoCaiu(e); atualizarRede(); });
 }
 
+function chaveFila(x) { return x.tipo === 'nc' ? x.idNC : (x.tipo === 'astpAnular' ? x.idAnul : x.idLeitura); }
 var _enviandoFila = false;
 function enviarFila() {
   if (_enviandoFila || !lerFila().length) return Promise.resolve();
@@ -374,16 +385,18 @@ function enviarFila() {
       if (item.tipo === 'nc') {
         envio = chamarCom(TIMEOUT_NC_MS, 'registrarNCFila', [item.cred, { idNC: item.idNC, serial: item.serial, tipo: item.tipoNC, descricao: item.descricao,
           foto: item.foto || '', idLeitura: item.idLeitura || '', horaTablet: item.horaTablet }]);
+      } else if (item.tipo === 'astpAnular') {
+        envio = chamar('anularAstpFila', item.cred, { idLeitura: item.idLeitura, idAnul: item.idAnul, horaTablet: item.horaTablet });
       } else {
         var dados = { idLeitura: item.idLeitura, serial: item.serial, ean: item.ean, origem: item.origem, horaTablet: item.horaTablet, offline: true };
         envio = chamar('registrarLeituraFila', item.cred, dados);
       }
       envio.then(function (r) {
-        var chave = item.tipo === 'nc' ? item.idNC : item.idLeitura;
-        gravarFila(lerFila().filter(function (x) { return (x.tipo === 'nc' ? x.idNC : x.idLeitura) !== chave; }));
+        var chave = chaveFila(item);
+        gravarFila(lerFila().filter(function (x) { return chaveFila(x) !== chave; }));
         if (!r.ok) {
           var rec = lsJson('recusadas', []);
-          rec.push({ serial: item.serial, msg: (item.tipo === 'nc' ? 'NC NÃO registrada — ' : '') + r.msg, quando: item.horaTablet, quem: item.usuarioNome, est: item.estacaoNome });
+          rec.push({ serial: item.serial, msg: (item.tipo === 'nc' ? 'NC NÃO registrada — ' : (item.tipo === 'astpAnular' ? 'ASTP NÃO anulado — ' : '')) + r.msg, quando: item.horaTablet, quem: item.usuarioNome, est: item.estacaoNome });
           lsPut('recusadas', rec);
           mostrarRecusadas();
         }
@@ -528,9 +541,10 @@ function sairDeVez() {
 $('btSair').onclick = function () { sairDeVez(); }; // a fila fica no tablet e vai sozinha quando a rede voltar
 
 /* ================= Tela de leitura ================= */
-var LEIT = { etapa: 'serial', serial: '', origem: 'CAMERA', ocupado: false, ultimo: '', ultimoT: 0, ignorar: {}, modoConsulta: false, nc: null };
+var LEIT = { etapa: 'serial', serial: '', origem: 'CAMERA', ocupado: false, ultimo: '', ultimoT: 0, ignorar: {}, ignorarMs: {}, modoConsulta: false, modoGestao: null, nc: null, astp: null };
 
 function leEan() { var s = sincLocal(); return !!(s && s.leEan && s.estacao === APP.usuario.estacao); }
+function ehEmbalagem() { return !!(APP.usuario && APP.usuario.estacao === 'EMBALAGEM'); }
 
 function abrirLeitura() {
   mostrar('telaLogin', false); mostrar('telaLeitura', true);
@@ -540,7 +554,7 @@ function abrirLeitura() {
   $('resultado').innerHTML = '';
   LEIT.nc = null;
   pedirSerial();
-  ajustarSino();
+  ajustarSino(); ajustarGestao();
   atualizarRede();
   abrirCamera();
   manterTelaLigada();
@@ -552,7 +566,7 @@ function pedirSerial() {
   if (LEIT.nc) return pedirSerialNC();
   LEIT.etapa = 'serial'; LEIT.serial = '';
   $('pedido').className = 'pedido';
-  $('pedido').innerHTML = 'Leia o SERIAL' + (leEan() ? '<small>depois o EAN da etiqueta de SKU</small>' : '');
+  $('pedido').innerHTML = 'Leia o SERIAL' + (leEan() ? '<small>depois o EAN da etiqueta de SKU' + (ehEmbalagem() ? ' · ASTP: leia só o EAN' : '') + '</small>' : '');
   mostrar('btCancelarEan', false); mostrar('btCancelarNC', false);
   $('manual').placeholder = 'Digitar serial (se a etiqueta não ler)';
 }
@@ -573,14 +587,15 @@ $('btCamera').onclick = function () { abrirCamera(); };
 /** Entrada única de códigos (câmera ou digitado). */
 function aoLer(txt, origem) {
   txt = normal(txt);
-  if (!txt || LEIT.ocupado || visivel('vermelha') || visivel('travada') || visivel('laranja') || visivel('ncPainel') || $('modal').innerHTML) return;
+  if (!txt || LEIT.ocupado || LEIT.astp || visivel('vermelha') || visivel('travada') || visivel('laranja') || visivel('ncPainel') || $('modal').innerHTML) return;
   var agora = Date.now();
   if (origem !== 'MANUAL') {
     if (txt === LEIT.ultimo && agora - LEIT.ultimoT < 2500) return;     // mesma etiqueta parada na frente
-    if (LEIT.ignorar[txt] && agora - LEIT.ignorar[txt] < 8000) return;  // acabou de ser registrada
+    if (LEIT.ignorar[txt] && agora - LEIT.ignorar[txt] < (LEIT.ignorarMs[txt] || 8000)) return;  // acabou de ser registrada
   }
   LEIT.ultimo = txt; LEIT.ultimoT = agora;
   if (LEIT.modoConsulta) { LEIT.modoConsulta = false; return consultar(txt); }
+  if (LEIT.modoGestao) { var fg = LEIT.modoGestao; LEIT.modoGestao = null; return fg(txt); }
   if (LEIT.nc) { // registrar NC: leitura do serial da peça
     if (RE_SERIAL.test(txt)) return abrirFormNC(txt, '');
     return dica(RE_EAN13.test(txt) ? 'Isso é um EAN. Leia o SERIAL da peça com problema.' : 'Código não reconhecido: ' + txt);
@@ -591,7 +606,10 @@ function aoLer(txt, origem) {
       if (leEan()) { pedirEan(txt); bip(900, 0.06, 1); return; }
       return enviar({ serial: txt });
     }
-    if (RE_EAN13.test(txt)) return dica('Isso é um EAN. Leia primeiro o SERIAL.');
+    if (RE_EAN13.test(txt)) {
+      if (ehEmbalagem()) { LEIT.origem = origem; return enviarAstp(txt); } // ASTP: só o EAN, na Embalagem
+      return dica('Isso é um EAN. Leia primeiro o SERIAL.');
+    }
     return dica('Código não reconhecido: ' + txt);
   }
   // etapa EAN
@@ -612,7 +630,7 @@ function enviar(p) {
   var envio = (navigator.onLine === false) ? Promise.reject(Object.assign(new Error('offline'), { rede: true })) : chamar('registrarLeitura', APP.token, item);
   envio.then(function (r) {
     LEIT.ocupado = false;
-    if (r.ok) { guardarHistorico(item.serial); telaVerde(r.serial, r.sku, Date.now() - t0, false, item.idLeitura); }
+    if (r.ok) { guardarHistorico(item.serial); telaVerde(r.serial, r.sku, Date.now() - t0, false, item.idLeitura, r); }
     else telaVermelha(p.serial + ' — ' + r.msg);
   }).catch(function (e) {
     LEIT.ocupado = false;
@@ -657,12 +675,14 @@ function jaLidaAqui(serial) {
   return lsJson(chaveHist(), []).some(function (x) { return x[0] === serial; });
 }
 
-function telaVerde(serial, sku, ms, pendente, idLeitura) {
+function telaVerde(serial, sku, ms, pendente, idLeitura, r) {
   sinalOk();
-  LEIT.ignorar[serial] = Date.now();
-  if (LEIT.serial) LEIT.ignorar[normal(LEIT.serial)] = Date.now();
+  LEIT.ignorar[serial] = Date.now(); delete LEIT.ignorarMs[serial];
+  if (LEIT.serial) { LEIT.ignorar[normal(LEIT.serial)] = Date.now(); delete LEIT.ignorarMs[normal(LEIT.serial)]; }
   $('resultado').innerHTML = '<div class="res verde"><div class="grande">✔ REGISTRADO</div>' +
     '<div class="det">' + esc(serial) + (sku ? ' · ' + esc(sku) : '') + ' · ' + esc(APP.usuario.estacaoNome) + (ms ? ' · ' + msTxt(ms) : '') + '</div>' +
+    (r && r.transf ? '<div class="faixa">TRANSFORMAÇÃO</div>' : '') +
+    (r && r.releitura ? '<div class="faixa">LIDA DE NOVO (liberada de NC)</div>' : '') +
     (pendente ? '<div class="pend">⏳ pendente — sem rede, envia sozinho</div>' : '') +
     '<div><button class="nc" id="btNaoConforme">✖ NÃO CONFORME</button></div></div>';
   $('btNaoConforme').onclick = function () { abrirFormNC(serial, idLeitura); };
@@ -691,12 +711,196 @@ function mostrarRecusadas() {
     rec.map(function (r) { return '<div><b>' + esc(r.serial) + '</b> (' + esc(horaTxt(r.quando)) + (r.quem ? ', ' + esc(r.quem) : '') + (r.est ? ', ' + esc(r.est) : '') + '): ' + esc(r.msg) + '</div>'; }).join(''));
 }
 
-function esconderSobres() { ['vermelha', 'travada', 'laranja', 'ncPainel'].forEach(function (i) { mostrar(i, false); }); $('modal').innerHTML = ''; LEIT.nc = null; }
+function esconderSobres() { ['vermelha', 'travada', 'laranja', 'ncPainel'].forEach(function (i) { mostrar(i, false); }); $('modal').innerHTML = ''; LEIT.nc = null; LEIT.astp = null; LEIT.modoGestao = null; }
+
+/* ================= ASTP na Embalagem (Fase 4) ================= */
+// Cada leitura do EAN de um ASTP é 1 unidade. A tela verde do ASTP segura a câmera até o OK (não conta em dobro
+// com a etiqueta parada na frente); "Anular (li duas vezes)" desfaz a leitura que acabou de ser feita.
+function enviarAstp(ean) {
+  LEIT.ocupado = true; LEIT.enviado = ean;
+  var item = { idLeitura: uuid(), serial: ean, ean: '', origem: LEIT.origem === 'MANUAL' ? 'MANUAL' : 'CAMERA', horaTablet: Date.now() };
+  $('pedido').className = 'pedido'; $('pedido').innerHTML = 'Registrando ASTP ' + esc(ean) + '…'; $('resultado').innerHTML = '';
+  var envio = (navigator.onLine === false) ? Promise.reject(Object.assign(new Error('offline'), { rede: true })) : chamar('registrarLeitura', APP.token, item);
+  envio.then(function (r) {
+    LEIT.ocupado = false;
+    if (r.ok) telaAstp(ean, r.sku, r.totalDia, item.idLeitura, false);
+    else telaVermelha(ean + ' — ' + r.msg);
+  }).catch(function (e) {
+    LEIT.ocupado = false;
+    if (e.sessao) return sessaoCaiu(e);
+    if (e.troca) return telaTroca(false);
+    if (!e.rede) return telaVermelha(ean + ' — ' + e.message + ' Leia de novo.');
+    astpSemRede(item);
+  });
+}
+function astpSemRede(item) {
+  var s = sincLocal() || {}, ean = item.serial, sku = s.astp ? s.astp[ean] : '';
+  var verm = function (m) { telaVermelha(ean + ' — ' + m + ' (sem rede)'); };
+  if (!sku) return verm(s.eans && s.eans[ean] ? 'Leia o número de série desta peça (este EAN é do ' + s.eans[ean] + ').' : 'EAN não cadastrado: ' + ean + '.');
+  var cred = s.cred;
+  if (!cred || cred.uid !== APP.usuario.id || cred.est !== APP.usuario.estacao) return verm('Este tablet ainda não sincronizou com você logado: aguarde a rede.');
+  if (Number(cred.ate) < Date.now()) return verm('Autorização para guardar leituras venceu (muito tempo sem rede).');
+  if (travado()) return telaTravada();
+  item.offline = true; item.cred = cred; item.estacao = APP.usuario.estacao; item.estacaoNome = APP.usuario.estacaoNome; item.usuarioNome = APP.usuario.nome; item.astp = true;
+  var f = lerFila(); f.push(item); gravarFila(f);
+  telaAstp(ean, sku, 0, item.idLeitura, true);
+}
+function telaAstp(ean, sku, total, idLeitura, pendente) {
+  sinalOk();
+  LEIT.astp = { ean: ean, sku: sku, id: idLeitura };
+  $('resultado').innerHTML = '<div class="res astp"><div class="grande">✔ ASTP REGISTRADO</div>' +
+    '<div class="det">' + esc(sku) + ' · EAN ' + esc(ean) + '</div>' +
+    (pendente ? '<div class="pend">⏳ pendente — sem rede, envia sozinho</div>' : '<div class="det">Total hoje deste SKU: <b>' + esc(total) + '</b></div>') +
+    '<div class="bts"><button class="okastp" id="btAstpOk">OK — próxima</button><button class="anular" id="btAstpAnular">Anular (li duas vezes)</button></div></div>';
+  $('btAstpOk').onclick = fecharAstp;
+  $('btAstpAnular').onclick = function () { anularAstpAgora(ean, sku, idLeitura); };
+  $('pedido').className = 'pedido'; $('pedido').innerHTML = 'Toque OK para ler a próxima';
+}
+function fecharAstp() {
+  if (LEIT.astp) { LEIT.ignorar[LEIT.astp.ean] = Date.now(); LEIT.ignorarMs[LEIT.astp.ean] = 3000; } // a mesma caixa ainda na frente da câmera
+  LEIT.astp = null; $('resultado').innerHTML = ''; pedirSerial();
+}
+function anularAstpAgora(ean, sku, idLeitura) {
+  $('btAstpAnular').disabled = true; $('btAstpOk').disabled = true;
+  var fim = function (txt) {
+    LEIT.astp = null; LEIT.ignorar[ean] = Date.now(); LEIT.ignorarMs[ean] = 3000;
+    $('resultado').innerHTML = '<div class="res anulada"><div class="grande">ASTP ANULADO</div><div class="det">' + esc(sku) + ' · ' + esc(txt) + '</div></div>';
+    pedirSerial();
+  };
+  // a leitura ainda não saiu do tablet: basta tirá-la da fila (nunca chegou ao servidor)
+  var f = lerFila();
+  if (f.some(function (x) { return x.idLeitura === idLeitura && !x.tipo; })) {
+    gravarFila(f.filter(function (x) { return !(x.idLeitura === idLeitura && !x.tipo); }));
+    return fim('tirado da fila do tablet');
+  }
+  var d = { idLeitura: idLeitura, idAnul: 'A' + uuid().slice(1), horaTablet: Date.now() };
+  chamar('anularAstp', APP.token, d).then(function (r) {
+    if (!r.ok) { LEIT.astp = null; return telaVermelha(ean + ' — ASTP NÃO anulado: ' + r.msg); }
+    fim('total hoje deste SKU: ' + r.totalDia);
+  }).catch(function (e) {
+    if (e.sessao) { LEIT.astp = null; return sessaoCaiu(e); }
+    if (!e.rede) { LEIT.astp = null; return telaVermelha(ean + ' — ASTP NÃO anulado: ' + e.message); }
+    var s = sincLocal() || {};
+    if (!s.cred) { LEIT.astp = null; return telaVermelha(ean + ' — sem rede e sem autorização: avise o gestor para anular.'); }
+    var fl = lerFila();
+    fl.push({ tipo: 'astpAnular', idLeitura: idLeitura, idAnul: d.idAnul, horaTablet: d.horaTablet, serial: ean, cred: s.cred,
+      estacao: APP.usuario.estacao, estacaoNome: APP.usuario.estacaoNome, usuarioNome: APP.usuario.nome });
+    gravarFila(fl);
+    fim('sem rede: anulação guardada no tablet, vai sozinha');
+  });
+}
+
+/* ================= GESTÃO no app (Fase 4): transformar e cancelar ================= */
+var GES = { dados: null };
+function ajustarGestao() {
+  var s = sincLocal();
+  mostrar('btGestao', !!(APP.usuario && APP.usuario.modo === 'gestor' && s && s.gestor && s.estacao === APP.usuario.estacao));
+}
+$('btGestao').onclick = function () {
+  if (LEIT.ocupado || LEIT.astp) return;
+  espera(true);
+  chamar('dadosGestorApp', APP.token).then(function (d) {
+    espera(false); GES.dados = d;
+    abrirModal('<h3>Gestão</h3>' +
+      (d.transformar ? '<button class="bloco" id="gTransf">Transformar peça (trocar SKU)</button>' : '') +
+      (d.cancelar ? '<button class="bloco perigo" id="gCanc">Cancelar peça</button>' : '') +
+      '<p class="msg info">Precisa de rede. Peça embalada não é cancelada: avaria, defeito ou extravio vão por NC → Reprovar.</p>' +
+      '<button class="sec bloco" id="gFechar">Fechar</button>');
+    if ($('gTransf')) $('gTransf').onclick = function () { pedirSerialGestao('Transformar: serial da peça', previaTransfApp); };
+    if ($('gCanc')) $('gCanc').onclick = function () { pedirSerialGestao('Cancelar: serial da peça', previaCancApp); };
+    $('gFechar').onclick = fecharModal;
+  }).catch(function (e) { espera(false); if (e.sessao) return sessaoCaiu(e); telaVermelha(e.rede ? 'Gestão precisa de rede.' : e.message); });
+};
+function pedirSerialGestao(titulo, depois) {
+  abrirModal('<h3>' + esc(titulo) + '</h3><div class="linha"><input id="gSerial" placeholder="Serial" autocomplete="off" style="flex:3"><button id="gOk">Buscar</button></div>' +
+    '<button class="claro bloco" id="gCam">Ler pela câmera</button><div id="gMsg"></div><button class="sec bloco" id="gVoltar">Fechar</button>');
+  $('gOk').onclick = function () { var v = normal($('gSerial').value); if (v) depois(v); };
+  $('gSerial').onkeydown = function (ev) { if (ev.key === 'Enter') $('gOk').onclick(); };
+  $('gCam').onclick = function () { LEIT.modoGestao = depois; fecharModal(); dica('Aponte para o SERIAL da peça.'); };
+  $('gVoltar').onclick = fecharModal;
+  $('gSerial').focus();
+}
+function linhaInfo(r) {
+  return '<table><tr><td>Serial</td><td><b>' + esc(r.serial) + '</b></td></tr><tr><td>SKU</td><td>' + esc(r.sku) + '</td></tr>' +
+    '<tr><td>Situação</td><td><b>' + esc(r.situacao) + '</b>' + (r.ncs ? ' · <span style="color:#c92a2a">' + r.ncs + ' NC aberta</span>' : '') + '</td></tr></table>';
+}
+function previaTransfApp(serial) {
+  espera(true);
+  chamar('previaTransformacao', APP.token, serial).then(function (r) {
+    espera(false);
+    var h = '<h3>Transformar ' + esc(r.serial) + '</h3>' + linhaInfo(r) +
+      '<p class="msg info">' + (r.tipo === 'ACABADA' ? 'Peça acabada: passa de novo por Acabamento, Qualidade e Embalagem (não conta de novo).' : 'Peça em processo: segue de onde estava.') +
+      ' O par novo de etiquetas vai para a fila de impressão do painel; a peça fica travada até ele ser impresso.</p>' +
+      (r.historico ? '<p class="msg alerta">Peça no histórico: ao confirmar, ela volta e é transformada na mesma ação.</p>' : '');
+    if (r.bloqueio) { abrirModal(h + '<div class="msg erro">' + esc(r.bloqueio) + '</div><button class="sec bloco" id="gVoltar">Fechar</button>'); $('gVoltar').onclick = fecharModal; return; }
+    abrirModal(h + '<label>Novo SKU</label><input id="gFiltro" placeholder="Filtrar…"><select class="lista" id="gSku" size="6"></select><div id="gAviso"></div>' +
+      '<label>Motivo (mínimo 15 caracteres)</label><textarea id="gMotivo" maxlength="300" style="min-height:70px;font-size:18px"></textarea><div id="gMsg"></div>' +
+      '<div class="linha" style="margin-top:10px"><button class="ok" id="gConf">' + (r.historico ? 'Trazer e transformar' : 'Transformar') + '</button><button class="sec" id="gVoltar">Voltar</button></div>');
+    var ops = function () {
+      var f = normal($('gFiltro').value);
+      $('gSku').innerHTML = r.skus.filter(function (x) { return x.sku !== r.sku && (!f || x.sku.indexOf(f) >= 0); })
+        .map(function (x) { return '<option value="' + esc(x.sku) + '">' + esc(x.sku) + '</option>'; }).join('');
+    };
+    ops(); $('gFiltro').oninput = ops;
+    $('gSku').onchange = function () {
+      var x = r.skus.filter(function (y) { return y.sku === $('gSku').value; })[0], av = [];
+      if (x && r.modelo && x.modelo !== r.modelo) av.push('o modelo técnico muda (' + r.modelo + ' → ' + x.modelo + ')');
+      if (x && r.familia && x.familia !== r.familia) av.push('a família muda (' + r.familia + ' → ' + x.familia + ')');
+      aviso('gAviso', av.length ? 'Atenção: ' + av.join(' e ') + '.' : '', 'alerta');
+    };
+    $('gVoltar').onclick = fecharModal;
+    var idc = 'X' + uuid().slice(1);
+    $('gConf').onclick = function () {
+      var sku = $('gSku').value, mot = $('gMotivo').value.trim();
+      if (!sku) return aviso('gMsg', 'Escolha o novo SKU.', 'erro');
+      if (mot.length < 15) return aviso('gMsg', 'Motivo com pelo menos 15 caracteres (agora: ' + mot.length + ').', 'erro');
+      $('gConf').disabled = true;
+      chamarCom(20000, 'transformarPeca', [APP.token, { serial: r.serial, sku: sku, motivo: mot, idCliente: idc, trazer: !!r.historico }]).then(function (x) {
+        if (!x.ok) { $('gConf').disabled = false; return aviso('gMsg', x.msg, 'erro'); }
+        abrirModal('<h3>Transformada</h3><p class="msg ok">' + esc(x.serial + ': ' + x.skuAntigo + ' → ' + x.skuNovo) + '</p>' +
+          '<p class="msg alerta">Imprima o par novo no painel (Fila de impressão → Etiqueta nova pendente) e troque as duas etiquetas. Até lá a peça é recusada nas estações.</p>' +
+          (x.aviso ? '<p class="msg alerta">Atenção: ' + esc(x.aviso) + '.</p>' : '') + '<button class="bloco" id="gVoltar">OK</button>');
+        $('gVoltar').onclick = fecharModal;
+      }).catch(function (e) {
+        if ($('gConf')) $('gConf').disabled = false;
+        if (e.sessao) { fecharModal(); return sessaoCaiu(e); }
+        aviso('gMsg', e.rede ? 'Sem rede: tente de novo (não grava em dobro).' : e.message, 'erro');
+      });
+    };
+  }).catch(function (e) { espera(false); if (e.sessao) { fecharModal(); return sessaoCaiu(e); } abrirModal('<div class="msg erro">' + esc(e.rede ? 'Sem rede.' : e.message) + '</div><button class="sec bloco" id="gVoltar">Fechar</button>'); $('gVoltar').onclick = fecharModal; });
+}
+function previaCancApp(serial) {
+  espera(true);
+  chamar('previaCancelamento', APP.token, serial).then(function (r) {
+    espera(false);
+    var h = '<h3>Cancelar ' + esc(r.serial) + '</h3>' + linhaInfo(r) + '<p class="pequeno">Registros: ' + esc(r.feitas.length ? r.feitas.join(', ') : 'nenhum') + '</p>';
+    if (r.bloqueio) { abrirModal(h + '<div class="msg erro">' + esc(r.bloqueio) + '</div><button class="sec bloco" id="gVoltar">Fechar</button>'); $('gVoltar').onclick = fecharModal; return; }
+    var mot = (GES.dados && GES.dados.motivos) || [];
+    abrirModal(h + '<p class="msg alerta">Não tem volta: o serial nunca é reaproveitado' + (r.ncs ? '; as NCs abertas da peça são encerradas' : '') + '.</p>' +
+      '<label>Motivo</label><select class="lista" id="gMot"><option value="">— escolha —</option>' + mot.map(function (m) { return '<option value="' + esc(m.codigo) + '">' + esc(m.descricao) + '</option>'; }).join('') + '</select>' +
+      '<label>Observação</label><input id="gObs" maxlength="300"><div id="gMsg"></div>' +
+      '<div class="linha" style="margin-top:10px"><button class="perigo" id="gConf">Cancelar peça</button><button class="sec" id="gVoltar">Voltar</button></div>');
+    $('gVoltar').onclick = fecharModal;
+    var idc = 'C' + uuid().slice(1);
+    $('gConf').onclick = function () {
+      if (!$('gMot').value) return aviso('gMsg', 'Escolha o motivo.', 'erro');
+      $('gConf').disabled = true;
+      chamarCom(20000, 'cancelarSerialApp', [APP.token, { serial: r.serial, motivo: $('gMot').value, observacao: $('gObs').value, idCliente: idc }]).then(function (x) {
+        abrirModal('<h3>Cancelada</h3><p class="msg ok">' + esc(r.serial) + ' cancelada' + (x.ncsEncerradas ? ' · ' + x.ncsEncerradas + ' NC encerrada(s)' : '') + '.</p><button class="bloco" id="gVoltar">OK</button>');
+        $('gVoltar').onclick = fecharModal;
+      }).catch(function (e) {
+        if ($('gConf')) $('gConf').disabled = false;
+        if (e.sessao) { fecharModal(); return sessaoCaiu(e); }
+        aviso('gMsg', e.rede ? 'Sem rede: tente de novo (não grava em dobro).' : e.message, 'erro');
+      });
+    };
+  }).catch(function (e) { espera(false); if (e.sessao) { fecharModal(); return sessaoCaiu(e); } abrirModal('<div class="msg erro">' + esc(e.rede ? 'Sem rede.' : e.message) + '</div><button class="sec bloco" id="gVoltar">Fechar</button>'); $('gVoltar').onclick = fecharModal; });
+}
 
 /* ================= NÃO CONFORMIDADE (tela laranja) ================= */
 var NCF = null; // formulário aberto: {serial, idLeitura, tipo, descricao, foto}
 $('btNovaNC').onclick = function () {
-  if (LEIT.ocupado) return;
+  if (LEIT.ocupado || LEIT.astp) return;
   LEIT.nc = { etapa: 'serial' }; $('resultado').innerHTML = '';
   pedirSerialNC();
 };
@@ -991,8 +1195,11 @@ function consultar(serial) {
       '<tr><td>SKU</td><td>' + esc(r.sku) + '</td></tr>' +
       '<tr><td>Situação</td><td><b>' + esc(r.situacao) + '</b>' + (r.ncs ? ' · <span style="color:#c92a2a">' + r.ncs + ' NC aberta: ' +
         (r.ncsAbertas || []).map(function (x) { return esc(x.operacaoNome) + ' ' + esc(x.aberturaTxt); }).join('; ') + '</span>' : '') + '</td></tr>' +
+      (r.etiquetaPendente ? '<tr><td>Etiqueta</td><td><b style="color:#c92a2a">Etiqueta nova pendente</b> (transformada' + (r.skuAnterior ? ' de ' + esc(r.skuAnterior) : '') + '): imprima e troque o par</td></tr>' : '') +
       '<tr><td>Próxima operação</td><td>' + esc(r.proxima || '—') + '</td></tr>' +
-      '<tr><td>Registros</td><td>' + (r.feitas.length ? r.feitas.map(function (f) { return esc(f.op) + ' — ' + esc(f.quando); }).join('<br>') : 'nenhum') + '</td></tr></table>';
+      '<tr><td>Registros</td><td>' + (r.feitas.length ? r.feitas.map(function (f) { return esc(f.op) + ' — ' + esc(f.quando); }).join('<br>') : 'nenhum') + '</td></tr>' +
+      ((r.transf || []).length || r.situacao === 'EM TRANSFORMAÇÃO' ? '<tr><td>Transformação</td><td>' + (r.skuAnterior ? 'de ' + esc(r.skuAnterior) + '<br>' : '') + ((r.transf || []).length ? r.transf.map(function (f) { return esc(f.op) + ' — ' + esc(f.quando); }).join('<br>') : 'nenhum registro ainda') + '</td></tr>' : '') +
+      '</table>';
   }).catch(function (e) {
     if (e.sessao) { fecharModal(); return sessaoCaiu(e); }
     aviso('qRes', e.rede ? 'Sem rede: a consulta precisa do servidor.' : e.message, 'erro');
@@ -1012,6 +1219,7 @@ function abrirAjuda() {
     '<li>Ajustes → Acessibilidade → <b>Acesso Guiado</b> → ligar e definir código.</li>' +
     '<li>Abra o app e clique 3 vezes no botão lateral → Iniciar.</li></ol>' +
     '<p><b>Não conformidade</b>: na tela verde, toque em NÃO CONFORME (desfaz o registro desta operação) ou use <b>Registrar NC</b> no topo. Sem rede, a NC fica guardada no tablet e vai sozinha; <b>separe a peça</b>.</p>' +
+    '<p><b>ASTP (Embalagem)</b>: leia só o EAN da etiqueta de SKU no lugar do serial. Cada leitura é 1 unidade: toque OK antes da próxima. Leu duas vezes? Toque <b>Anular</b> logo em seguida.</p>' +
     '<p class="msg info">Deixe o tablet na tomada: a tela fica sempre ligada enquanto o app está aberto.</p>' +
     '<button class="sec bloco" id="aFechar">Fechar</button>');
   $('aFechar').onclick = fecharModal;
